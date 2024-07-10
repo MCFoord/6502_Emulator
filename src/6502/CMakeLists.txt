@@ -1,3 +1,5 @@
+project(6502)
+
 
 add_library(6502 STATIC
     cpu6502.cpp
