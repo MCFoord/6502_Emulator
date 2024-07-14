@@ -1,6 +1,6 @@
-project(imgui)
+project(IMGUI)
 
-set(IMGUI_SOURCE_DIR ${CMAKE_SOURCE_DIR}/imgui)
+set(IMGUI_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
 set(IMGUI_BACKENDS_DIR ${IMGUI_SOURCE_DIR}/backends)
 set(IMGUI_LIBS_DIR ${IMGUI_SOURCE_DIR}/examples/libs)
 
@@ -16,21 +16,16 @@ set(IMGUI_SOURCE_FILES
     # ${GL3W_SOURCE_DIR}/GL/gl3w.c
 )
 
-add_library(imgui STATIC
-    ${IMGUI_SOURCE_DIR}
+add_library(IMGUI STATIC
+    ${IMGUI_SOURCE_FILES}
 )
 
-target_include_directories(imgui PRIVATE
+target_include_directories(IMGUI PUBLIC
     ${IMGUI_SOURCE_DIR}
     ${IMGUI_BACKENDS_DIR}
-    # ${GLFW_INCLUDE_DIR}
-    # ${GL3W_SOURCE_DIR}
 )
 
-find_package(OpenGL REQUIRED)
-
-target_link_libraries(imgui
-    OpenGL::GL
+target_link_libraries(IMGUI
     glfw
 )
 
