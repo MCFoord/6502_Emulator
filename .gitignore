@@ -34,3 +34,7 @@
 # build directory
 build/
 .vscode/
+
+# imgui files
+imgui.ini
+imgui*.ini
