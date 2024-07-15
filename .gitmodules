@@ -1,4 +1,4 @@
-[submodule "external/glfw"]
+[submodule "external/glfw/glfw"]
 	path = external/glfw/glfw
 	url = https://github.com/glfw/glfw/glfw.git
 [submodule "external/imgui/imgui"]
