@@ -4,7 +4,9 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-
+#include "bus.h"
+#include <sstream>
+#include <iomanip>
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
@@ -26,7 +28,7 @@ int main() {
     if (window == NULL) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
-        return -1;
+        return -1; 
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -46,6 +48,8 @@ int main() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
+    Bus *bus = new Bus();
+
     // Main loop
     while (!glfwWindowShouldClose(window)) {
         // Input
@@ -58,7 +62,18 @@ int main() {
 
         // Create a simple ImGui window
         ImGui::Begin("Hello, world!");
-        ImGui::Text("This is some useful text.");
+        for (int i = 0x0000; i <= 0xFFFF; i++)
+        {
+            std::stringstream ss;
+
+            ss << std::setfill('0') << std::setw(2) << std::hex << bus->read(i);
+            ImGui::TextUnformatted(ss.str().c_str());
+            if(i % 16 != 0 && i != 0)
+            {
+                ImGui::SameLine(0,0);
+            }
+        }
+        
         ImGui::End();
 
         // Render ImGui
@@ -68,7 +83,7 @@ int main() {
         glViewport(0, 0, display_w, display_h);
         glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
         glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());  
 
         // Swap buffers
         glfwSwapBuffers(window);
