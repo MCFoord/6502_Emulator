@@ -11,7 +11,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-int main() {
+int main(int argc, char **argv) {
+
     // Initialize GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -22,6 +23,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwSwapInterval(6);
 
     // Create a GLFWwindow object
     GLFWwindow* window = glfwCreateWindow(800, 600, "ImGui Window", NULL, NULL);
@@ -32,6 +34,7 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
 
     if (!gladLoadGL(glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
@@ -49,6 +52,7 @@ int main() {
     ImGui_ImplOpenGL3_Init("#version 330");
 
     Bus *bus = new Bus();
+    bus->loadProgram(argv[1]);
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
@@ -64,14 +68,27 @@ int main() {
         ImGui::Begin("Hello, world!");
         for (int i = 0x0000; i <= 0xFFFF; i++)
         {
-            std::stringstream ss;
+            ImGui::Text("%04X", i);
+            ImGui::SameLine(0,0);
+            ImGui::Text(": ");
+            ImGui::SameLine(0,0);
 
-            ss << std::setfill('0') << std::setw(2) << std::hex << bus->read(i);
-            ImGui::TextUnformatted(ss.str().c_str());
-            if(i % 16 != 0 && i != 0)
+            for (int j = 0; j < 15; j++)
             {
+                ImGui::Text("%02X", bus->read(i));
                 ImGui::SameLine(0,0);
+                ImGui::Text(" ");
+                ImGui::SameLine(0,0);
+                i++;
+                if (j == 7)
+                {
+                    ImGui::Text(" ");
+                    ImGui::SameLine(0,0);
+                }
             }
+            ImGui::Text("%02X", bus->read(i));
+            ImGui::SameLine(0,0);
+            ImGui::Text(" ");
         }
         
         ImGui::End();
