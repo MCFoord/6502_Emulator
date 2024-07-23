@@ -9,17 +9,17 @@
 
 class Window
 {
-    public:
-        Window();
-        ~Window();
-        void mainLoop();
-        void drawFrame();
+public:
+    Window();
+    ~Window();
+    void mainLoop();
+    void drawFrame();
 
-    private:
-        GLFWwindow* m_window = nullptr;
-        bool initGlfw();
-        bool initGlad();
-        void initImGui();
-        void terminateImGui();
-        void terminateGlfw();
+private:
+    GLFWwindow* m_window = nullptr;
+    bool initGlfw();
+    bool initGlad();
+    void initImGui();
+    void terminateImGui();
+    void terminateGlfw();
 };
