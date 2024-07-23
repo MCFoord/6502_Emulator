@@ -1,5 +1,6 @@
 #include <iostream>
 #include "window.h"
+#include "controlpanel.h"
 #include "bus.h"
 
 Window::Window()
@@ -7,6 +8,8 @@ Window::Window()
     initGlfw();
     initGlad();
     initImGui();
+
+    m_components.push_back(new ControlPanel("Controls"));
     mainLoop();
 }
 
@@ -14,6 +17,13 @@ Window::~Window()
 {
     terminateImGui();
     terminateGlfw();
+
+    for (Component* component : m_components)
+    {
+        delete component;
+    }
+
+    m_components.clear();
 }
 
 bool Window::initGlfw()
@@ -66,33 +76,11 @@ void Window::drawFrame()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        
-        ImGui::Begin("Hello, world!");
-        for (int i = 0x0000; i <= 0xFFFF; i++)
-        {
-            ImGui::Text("%04X", i);
-            ImGui::SameLine(0,0);
-            ImGui::Text(": ");
-            ImGui::SameLine(0,0);
 
-            for (int j = 0; j < 15; j++)
-            {
-                ImGui::Text("%02X", 0xFF);
-                ImGui::SameLine(0,0);
-                ImGui::Text(" ");
-                ImGui::SameLine(0,0);
-                i++;
-                if (j == 7)
-                {
-                    ImGui::Text(" ");
-                    ImGui::SameLine(0,0);
-                }
-            }
-            ImGui::Text("%02X", 0xFF);
-            ImGui::SameLine(0,0);
-            ImGui::Text(" ");
+        for (auto& component : m_components)
+        {
+            component->draw();
         }
-        ImGui::End();
 }
 
 void Window::mainLoop()
