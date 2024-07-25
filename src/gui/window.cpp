@@ -1,7 +1,8 @@
 #include <iostream>
 #include "window.h"
 #include "controlpanel.h"
-#include "bus.h"
+#include "hexview.h"
+
 
 Window::Window()
 {
@@ -9,7 +10,14 @@ Window::Window()
     initGlad();
     initImGui();
 
-    m_components.push_back(new ControlPanel("Controls"));
+    bus = Bus();
+    cpu = CPU6502();
+
+    //As everthing is owned by window, all pointers should be cleaned up when window is destroyed
+    //Should probably change this to a shared pointer though just in case
+    cpu.connectBus(&bus);
+    Component* controls = new ControlPanel("Controls", &cpu, &bus, this);
+    m_components.push_back(controls);
     mainLoop();
 }
 
@@ -69,6 +77,12 @@ void Window::initImGui()
 
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
+}
+
+void Window::createNewHexView()
+{
+    std::string hexViewId = "RAM" + m_components.size();
+    m_components.push_back(new HexView(hexViewId, &bus));
 }
 
 void Window::drawFrame()

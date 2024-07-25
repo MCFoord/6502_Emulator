@@ -1,7 +1,9 @@
 #include "hexview.h"
 #include "imgui.h"
 
-HexView::HexView(std::string id): m_id(id)
+HexView::HexView(std::string id, Bus* bus):
+m_id(id),
+m_bus(bus)
 {
     
 }
@@ -13,6 +15,8 @@ HexView::~HexView()
 
 void HexView::draw()
 {
+    //change this to be dependant on ram size
+    //and just change it to be better anyway
     ImGui::Begin(m_id.c_str());
     for (int i = 0x0000; i <= 0xFFFF; i++)
     {
@@ -23,7 +27,7 @@ void HexView::draw()
 
         for (int j = 0; j < 15; j++)
         {
-            ImGui::Text("%02X", 0xFF);
+            ImGui::Text("%02X", m_bus->read(i));
             ImGui::SameLine(0,0);
             ImGui::Text(" ");
             ImGui::SameLine(0,0);
@@ -34,7 +38,7 @@ void HexView::draw()
                 ImGui::SameLine(0,0);
             }
         }
-        ImGui::Text("%02X", 0xFF);
+        ImGui::Text("%02X", m_bus->read(i));
         ImGui::SameLine(0,0);
         ImGui::Text(" ");
     }
