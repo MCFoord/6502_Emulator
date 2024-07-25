@@ -46,7 +46,7 @@ std::string Bus::memToString(uint16_t start, uint16_t end)
     return ss.str();
 }
 
-void Bus::loadProgram(char* fileName)
+void Bus::loadProgram(const char* fileName)
 {
     std::ifstream file(fileName, std::ios::binary);
     file.seekg (0, file.end);
@@ -54,5 +54,12 @@ void Bus::loadProgram(char* fileName)
     file.seekg (0, file.beg);
 
     file.read(reinterpret_cast<char*>(ram), length);
+}
 
+void Bus::clearmemory()
+{
+    for (int i = 0x0000; i <= 0xFFFF; i++)
+    {
+        ram[i] = 0x00;
+    }
 }
