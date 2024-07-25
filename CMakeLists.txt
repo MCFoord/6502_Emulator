@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30.0)
+cmake_minimum_required(VERSION 3.28.0)
 
 project(6502Emulator)
 
@@ -16,6 +16,4 @@ add_executable(6502Emulator
 target_link_libraries(6502Emulator PRIVATE
     6502
     gui
-    # imgui
-    # glad
 )

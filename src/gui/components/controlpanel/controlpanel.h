@@ -12,4 +12,7 @@ public:
 private:
     //sizes
     std::string m_id;
+    bool m_fileLoaded = false;
+    bool m_showFilePicker = false;
+    std::string m_programFileName;
 };
