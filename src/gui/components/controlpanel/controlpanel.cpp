@@ -47,7 +47,7 @@ void ControlPanel::draw()
         m_bus->clearmemory();
     }
 
-    if (ImGui::Button("Add memory viewer", ImVec2(200, 100)))
+    if (ImGui::Button("Add memory view", ImVec2(200, 100)))
     {
         m_window->createNewHexView();
     }

@@ -44,3 +44,10 @@ void HexView::draw()
     }
     ImGui::End();
 }
+
+void HexView::drawMemory()
+{
+    ImGui::BeginChild("##scrolling");
+    
+    ImGui::EndChild();
+}
