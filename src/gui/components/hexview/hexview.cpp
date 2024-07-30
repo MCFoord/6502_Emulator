@@ -1,6 +1,11 @@
 #include "hexview.h"
 #include "imgui.h"
 
+#define HEX_COLUMNS 16
+#define HEX_ROWS 16
+#define MEM_SIZE 64 * 1024
+#define HEX_COL_MIDPOINT 7
+
 HexView::HexView(std::string id, Bus* bus):
 m_id(id),
 m_bus(bus)
@@ -15,39 +20,47 @@ HexView::~HexView()
 
 void HexView::draw()
 {
-    //change this to be dependant on ram size
-    //and just change it to be better anyway
     ImGui::Begin(m_id.c_str());
-    for (int i = 0x0000; i <= 0xFFFF; i++)
-    {
-        ImGui::Text("%04X", i);
-        ImGui::SameLine(0,0);
-        ImGui::Text(": ");
-        ImGui::SameLine(0,0);
 
-        for (int j = 0; j < 15; j++)
-        {
-            ImGui::Text("%02X", m_bus->read(i));
-            ImGui::SameLine(0,0);
-            ImGui::Text(" ");
-            ImGui::SameLine(0,0);
-            i++;
-            if (j == 7)
-            {
-                ImGui::Text(" ");
-                ImGui::SameLine(0,0);
-            }
-        }
-        ImGui::Text("%02X", m_bus->read(i));
-        ImGui::SameLine(0,0);
-        ImGui::Text(" ");
-    }
+    drawMemory();
     ImGui::End();
 }
 
 void HexView::drawMemory()
 {
-    ImGui::BeginChild("##scrolling");
-    
+    ImGui::BeginChild("##scrolling", ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * HEX_ROWS));
+    ImGuiListClipper clipper;
+    clipper.Begin(MEM_SIZE / HEX_COLUMNS, ImGui::GetTextLineHeight());
+    while (clipper.Step())
+    {
+        int addr = clipper.DisplayStart;
+        for (int line = clipper.DisplayStart; line < clipper.DisplayEnd; line++)
+        {
+            int addr = line * HEX_COLUMNS;
+            ImGui::Text("%04X", addr);
+            ImGui::SameLine(0,0);
+            ImGui::Text(": ");
+            ImGui::SameLine(0,0);
+
+            for (int col = 0; col < HEX_COLUMNS && addr < MEM_SIZE; col++, addr++)
+            {
+                ImGui::Text("%02X", m_bus->read(addr));
+                ImGui::SameLine(0,0);
+                ImGui::Text(" ");
+                ImGui::SameLine(0,0);
+                if (col == HEX_COL_MIDPOINT)
+                {
+                    ImGui::Text(" ");
+                    ImGui::SameLine(0,0);
+                }
+            }
+            ImGui::Text(" ");
+        }
+    }
     ImGui::EndChild();
+    ImGui::BeginChild("##footer");
+    ImGui::Text("%04X",clipper.DisplayStart);
+    ImGui::Text("%04X",clipper.DisplayEnd);
+    ImGui::EndChild();
+    
 }
