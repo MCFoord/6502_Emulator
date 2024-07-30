@@ -81,7 +81,8 @@ void Window::initImGui()
 
 void Window::createNewHexView()
 {
-    std::string hexViewId = "RAM" + m_components.size();
+    std::string hexViewId = "RAM" + std::to_string(m_components.size());
+    std::cout << "RAM" << m_components.size() << hexViewId << "\n";
     m_components.push_back(new HexView(hexViewId, &bus));
 }
 
