@@ -11,7 +11,7 @@ void runCpu(CPU6502* cpu, std::mutex& mtx, std::condition_variable& cv, bool& re
 {
     std::unique_lock<std::mutex> lock(mtx);
     bool shouldQuit = false;
-    
+    bool shouldStop = false;
     while (!shouldQuit)
     {
         cv.wait(lock, [&ready]{ return ready; });
@@ -24,7 +24,9 @@ void runCpu(CPU6502* cpu, std::mutex& mtx, std::condition_variable& cv, bool& re
                 break;
             case CpuOption::RUN:
                 std::cout << "RUN" << '\n';
-                cpu->run();
+                shouldStop = false;
+                cpu->run(shouldStop);
+                std::cout << "STOP" << '\n';
                 break;
             case CpuOption::RESET:
                 std::cout << "RESET" << '\n';

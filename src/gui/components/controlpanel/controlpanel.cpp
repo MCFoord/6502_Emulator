@@ -56,12 +56,14 @@ void ControlPanel::draw()
         //load program
         m_bus->loadProgram(m_programFileName.c_str());
         m_fileLoaded = true;
+        setCpuOption(CpuOption::RESET);
     }
 
     if (ImGui::Button("Unload Program", ImVec2(200, 100)))
     {
         //set all ram to 0x00
         m_bus->clearmemory();
+        m_fileLoaded = false;
         setCpuOption(CpuOption::RESET);
     }
 

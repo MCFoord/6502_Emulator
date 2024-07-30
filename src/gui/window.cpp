@@ -12,7 +12,8 @@
 Window::Window(
     Bus* bus, std::mutex& mtx, std::condition_variable& cv,
     bool& optionSet, CpuOption& option
-)
+):
+m_bus(bus)
 {
     initGlfw();
     initGlad();

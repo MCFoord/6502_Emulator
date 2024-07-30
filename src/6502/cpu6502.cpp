@@ -416,9 +416,25 @@ void CPU6502::run(int numOperations)
 
 void CPU6502::run(bool& shouldStop)
 {
+    uint16_t currentPC = 0x00;
+    int pcRepeatCount = 0;
+
     while (currentInstruction.instructionName != "ILL" && !shouldStop)
     {
         execute();
+        if (pc == currentPC)
+        {
+            pcRepeatCount++;
+        }
+        else if (pc == 0x3469 || pc == 0x346c)
+        {
+            std::cout << "SUCCESS" << '\n';
+            shouldStop = true;
+        }
+        else
+        {
+            currentPC = pc;
+        }
     }
 }
 
