@@ -25,8 +25,8 @@ private:
     bool m_fileLoaded = false;
     bool m_showFilePicker = false;
     std::string m_programFileName = "Select a program to load";
-    Bus* m_bus;
-    Window* m_window;
+    Bus* m_bus = nullptr;
+    Window* m_window = nullptr;
 
     void setCpuOption(CpuOption chosenOption);
 };

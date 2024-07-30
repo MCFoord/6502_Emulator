@@ -13,5 +13,5 @@ public:
     void drawMemory();
 private:
     std::string m_id;
-    Bus* m_bus;
+    Bus* m_bus = nullptr;
 };

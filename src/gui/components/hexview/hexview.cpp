@@ -1,5 +1,6 @@
 #include "hexview.h"
 #include "imgui.h"
+#include <iostream>
 
 #define HEX_COLUMNS 16
 #define HEX_ROWS 16

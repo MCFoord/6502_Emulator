@@ -24,7 +24,7 @@ public:
 private:
     GLFWwindow* m_window = nullptr;
     std::vector<Component*> m_components;
-    Bus* m_bus;
+    Bus* m_bus = nullptr;
     bool initGlfw();
     bool initGlad();
     void initImGui();
