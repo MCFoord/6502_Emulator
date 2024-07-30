@@ -414,6 +414,14 @@ void CPU6502::run(int numOperations)
     }
 }
 
+void CPU6502::run(bool& shouldStop)
+{
+    while (currentInstruction.instructionName != "ILL" && !shouldStop)
+    {
+        execute();
+    }
+}
+
 void CPU6502::run()
 {
     while (currentInstruction.instructionName != "ILL")

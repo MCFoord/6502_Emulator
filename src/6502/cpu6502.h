@@ -66,7 +66,9 @@ public:
     void tick();
     void execute();
     void run(int numOperations);
+    void run(bool& shouldStop);
     void run();
+    
 
     //debug methods
     std::string registerToString();
