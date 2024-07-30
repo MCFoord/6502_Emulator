@@ -1,20 +1,22 @@
 #pragma once
 
 #include <vector>
-#include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include <mutex>
+#include <condition_variable>
 #include "component.h"
 #include "bus.h"
 #include "cpu6502.h"
+#include "cpuoption.h"
 
 
 class Window
 {
 public:
-    Window();
+    Window(
+        Bus* bus, std::mutex& mtx, std::condition_variable& cv,
+        bool& optionSet, CpuOption& option
+    );
     ~Window();
     void mainLoop();
     void drawFrame();
@@ -22,8 +24,7 @@ public:
 private:
     GLFWwindow* m_window = nullptr;
     std::vector<Component*> m_components;
-    Bus bus;
-    CPU6502 cpu;
+    Bus* m_bus;
     bool initGlfw();
     bool initGlad();
     void initImGui();

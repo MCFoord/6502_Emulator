@@ -2,12 +2,19 @@
 #include "controlpanel.h"
 #include "imgui.h"
 #include "window.h"
+#include "cpuoption.h"
 
-ControlPanel::ControlPanel(std::string id, CPU6502* cpu, Bus* bus, Window* window):
+ControlPanel::ControlPanel(
+    std::string id, Bus* bus, std::mutex& mtx, std::condition_variable& cv,
+    bool& optionSet, CpuOption& option, Window* window
+):
 m_id(id),
 m_bus(bus),
-m_cpu(cpu),
-m_window(window)
+m_window(window),
+m_cpuOptionLock(mtx),
+m_cpuOptionSetCV(cv),
+m_chosenOption(option),
+m_optionSet(optionSet)
 {
 
 }
@@ -17,10 +24,20 @@ ControlPanel::~ControlPanel()
 
 }
 
+void ControlPanel::setCpuOption(CpuOption chosenOption)
+{
+    std::lock_guard<std::mutex> lock(m_cpuOptionLock);
+    m_chosenOption = chosenOption;
+    m_optionSet = true;
+    
+    m_cpuOptionSetCV.notify_all();
+}
+
 void ControlPanel::draw()
 {    
     ImGui::Begin(m_id.c_str());
 
+    //change this to use the path object
     std::string programDir = std::filesystem::current_path().string() + "/programs";
 
     if (ImGui::BeginCombo("##combo", m_programFileName.c_str()))
@@ -45,6 +62,7 @@ void ControlPanel::draw()
     {
         //set all ram to 0x00
         m_bus->clearmemory();
+        setCpuOption(CpuOption::RESET);
     }
 
     if (ImGui::Button("Add memory view", ImVec2(200, 100)))
@@ -55,24 +73,29 @@ void ControlPanel::draw()
     if (ImGui::Button("Execute", ImVec2(200, 100)))
     {
         //step one instruction
-        m_cpu->execute();
+        setCpuOption(CpuOption::EXECUTE);
     }
 
     if (ImGui::Button("Reset", ImVec2(200, 100)))
     {
         //call cpu reset
-        m_cpu->reset();
+        setCpuOption(CpuOption::RESET);
     }
 
     if (ImGui::Button("Run", ImVec2(200, 100)))
     {
         //run program until an illegal operation is encountered or program is finished
-        m_cpu->run();
+        setCpuOption(CpuOption::RUN);
     }
 
     if (ImGui::Button("Set BreakPoint", ImVec2(200, 100)))
     {
         //set a breakpoint in the program
+    }
+
+    if (ImGui::Button("Quit", ImVec2(200, 100)))
+    {
+        setCpuOption(CpuOption::QUIT);
     }
 
     ImGui::End();

@@ -1,22 +1,24 @@
 #include <iostream>
+#include <glad/gl.h>
 #include "window.h"
 #include "controlpanel.h"
 #include "hexview.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 
-Window::Window()
+
+Window::Window(
+    Bus* bus, std::mutex& mtx, std::condition_variable& cv,
+    bool& optionSet, CpuOption& option
+)
 {
     initGlfw();
     initGlad();
     initImGui();
 
-    bus = Bus();
-    cpu = CPU6502();
-
-    //As everthing is owned by window, all pointers should be cleaned up when window is destroyed
-    //Should probably change this to a shared pointer though just in case
-    cpu.connectBus(&bus);
-    Component* controls = new ControlPanel("Controls", &cpu, &bus, this);
+    Component* controls = new ControlPanel("Controls", bus, mtx, cv, optionSet, option, this);
     m_components.push_back(controls);
     mainLoop();
 }
@@ -83,7 +85,7 @@ void Window::createNewHexView()
 {
     std::string hexViewId = "RAM" + std::to_string(m_components.size());
     std::cout << "RAM" << m_components.size() << hexViewId << "\n";
-    m_components.push_back(new HexView(hexViewId, &bus));
+    m_components.push_back(new HexView(hexViewId, m_bus));
 }
 
 void Window::drawFrame()

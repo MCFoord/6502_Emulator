@@ -12,7 +12,6 @@ public:
     void draw() override;
     void drawMemory();
 private:
-    //sizes
     std::string m_id;
     Bus* m_bus;
 };
