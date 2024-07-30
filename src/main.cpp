@@ -20,12 +20,15 @@ void runCpu(CPU6502* cpu, std::mutex& mtx, std::condition_variable& cv, bool& re
         {
             case CpuOption::EXECUTE:
                 std::cout << "EXECUTE" << '\n';
+                cpu->execute();
                 break;
             case CpuOption::RUN:
                 std::cout << "RUN" << '\n';
+                cpu->run();
                 break;
             case CpuOption::RESET:
                 std::cout << "RESET" << '\n';
+                cpu->reset();
                 break;
             case CpuOption::QUIT:
                 std::cout << "QUIT" << '\n';
