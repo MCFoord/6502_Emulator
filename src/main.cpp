@@ -7,6 +7,7 @@
 #include "cpuoption.h"
 #include "bus.h"
 
+
 void runCpu(CPU6502* cpu, std::mutex& mtx, std::condition_variable& cv, bool& ready, CpuOption* chosenOption)
 {
     std::unique_lock<std::mutex> lock(mtx);
@@ -34,7 +35,7 @@ void runCpu(CPU6502* cpu, std::mutex& mtx, std::condition_variable& cv, bool& re
                 break;
             case CpuOption::QUIT:
                 std::cout << "QUIT" << '\n';
-                // shouldQuit = true;
+                shouldQuit = true; 
                 break;
         }
 

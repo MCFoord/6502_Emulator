@@ -29,12 +29,20 @@ void HexView::draw()
 
 void HexView::drawMemory()
 {
-    ImGui::BeginChild("##scrolling", ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * HEX_ROWS));
+    ImGui::BeginChild("##scrolling", ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * HEX_ROWS), ImGuiChildFlags_None, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav);
     ImGuiListClipper clipper;
     clipper.Begin(MEM_SIZE / HEX_COLUMNS, ImGui::GetTextLineHeight());
+
     while (clipper.Step())
     {
-        int addr = clipper.DisplayStart;
+
+        if (clipper.DisplayStart != m_hexRangeStart | clipper.DisplayEnd != m_hexRangeEnd)
+        {
+            m_hexRangeStart = clipper.DisplayStart;
+            m_hexRangeEnd = clipper.DisplayEnd;
+        }
+
+        m_baseLinePos = ImGui::GetCursorPos();
         for (int line = clipper.DisplayStart; line < clipper.DisplayEnd; line++)
         {
             int addr = line * HEX_COLUMNS;
@@ -60,8 +68,16 @@ void HexView::drawMemory()
     }
     ImGui::EndChild();
     ImGui::BeginChild("##footer");
-    ImGui::Text("%04X",clipper.DisplayStart);
-    ImGui::Text("%04X",clipper.DisplayEnd);
+    if (ImGui::IsMouseClicked(0))
+    {
+        ImVec2 mousePos = ImGui::GetMousePos();
+        int lineDiff = (mousePos.x - m_baseLinePos.x) / ImGui::GetTextLineHeight();
+        m_selectedLinebaseAddress = clipper.DisplayStart + (lineDiff * HEX_COLUMNS);
+        std::cout << m_selectedLinebaseAddress << '\n';
+    }
+
+    ImGui::Text("%04X", m_selectedLinebaseAddress);
+    ImGui::Text("%04X", clipper.DisplayEnd);
     ImGui::EndChild();
     
 }
