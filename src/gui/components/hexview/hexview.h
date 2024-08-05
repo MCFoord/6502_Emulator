@@ -19,12 +19,13 @@ private:
     int m_hexRangeStart = 0;
     int m_hexRangeEnd = 0;
     int m_selectedLinebaseAddress = 0;
-    int m_selectedAddress = 0;
+    int m_selectedAddress = -1;
     ImVec2 m_baseLinePos;
 
     struct sizes
     {
         ImVec2 hexCell;
+        ImVec2 hexCellText;
         ImVec2 addressCell;
         ImVec2 colMidPointSplit;
         float lineHeight;

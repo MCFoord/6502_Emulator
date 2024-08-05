@@ -34,6 +34,7 @@ void HexView::setSizes()
 {
     m_sizes.addressCell = ImGui::CalcTextSize("FFFF: ");
     m_sizes.hexCell = ImGui::CalcTextSize("FF ");
+    m_sizes.hexCellText = ImGui::CalcTextSize("FF");
     m_sizes.colMidPointSplit = ImGui::CalcTextSize(" ");
     m_sizes.lineHeight = ImGui::GetTextLineHeight();
     m_sizes.lineheightWithSpacing = ImGui::GetTextLineHeightWithSpacing();
@@ -82,6 +83,8 @@ void HexView::drawHeader()
 
 void HexView::drawMemory()
 {
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    
     ImGui::BeginChild(
         "memory", ImVec2(-FLT_MIN, m_sizes.lineHeight * HEX_ROWS),
         ImGuiChildFlags_None, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav
@@ -108,7 +111,13 @@ void HexView::drawMemory()
             ImGui::SameLine(0,0);
 
             for (int col = 0; col < HEX_COLUMNS && addr < MEM_SIZE; col++, addr++)
-            {
+            {   
+                if (addr == m_selectedAddress)
+                {
+                    ImVec2 pos = ImGui::GetCursorScreenPos();
+                    drawList->AddRectFilled(pos, ImVec2(pos.x + m_sizes.hexCellText.x, pos.y + m_sizes.hexCellText.y), IM_COL32(255, 0, 0, 100));
+                }
+
                 drawHexcell(m_bus->read(addr));
 
                 if (col == HEX_COL_MIDPOINT)
