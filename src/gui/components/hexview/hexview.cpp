@@ -6,6 +6,8 @@
 #define HEX_ROWS 16
 #define MEM_SIZE 64 * 1024
 #define HEX_COL_MIDPOINT 7
+#define SELECTED_HIGHLIGHT_COLOUR IM_COL32(0, 255, 0, 100)
+#define BREAKPOINT_HIGHLIGHT_COLOUR IM_COL32(255, 0, 0, 100)
 
 HexView::HexView(std::string id, Bus* bus):
 m_id(id),
@@ -26,6 +28,7 @@ void HexView::draw()
     setSizes();
     drawHeader();
     drawMemory();
+    drawFooter();
 
     ImGui::End();
 }
@@ -53,11 +56,28 @@ bool HexView::clickInsideMemorywindow()
     return isInsideX && isInsideY;
 }
 
+void HexView::calcSelectedAddress()
+{
+    ImVec2 mousePos = ImGui::GetMousePos();
+    int lineDiff = (mousePos.y - m_baseLinePos.y) / m_sizes.lineheightWithSpacing;
+    int colDiff = (mousePos.x - (m_baseLinePos.x + m_sizes.addressCell.x)) / (m_sizes.hexCell.x);
+    if (colDiff > HEX_COL_MIDPOINT)
+    {
+        colDiff = (mousePos.x - (m_baseLinePos.x + m_sizes.addressCell.x + m_sizes.colMidPointSplit.x)) / (m_sizes.hexCell.x);
+    }
+    m_selectedLinebaseAddress = m_visibleBaseAddress + (lineDiff * HEX_COLUMNS);
+    m_selectedAddress = m_selectedLinebaseAddress + (colDiff);
+}
+
+void HexView::colourCell(ImU32 colour, ImDrawList* dl)
+{
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+    dl->AddRectFilled(pos, ImVec2(pos.x + m_sizes.hexCellText.x, pos.y + m_sizes.hexCellText.y), colour);
+}
+
 void HexView::drawHexcell(int value)
 {
-    ImGui::Text("%02X", value);
-    ImGui::SameLine(0,0);
-    ImGui::Text(" ");
+    ImGui::Text("%02X ", value);
     ImGui::SameLine(0,0);
 }
 
@@ -102,20 +122,22 @@ void HexView::drawMemory()
         }
 
         m_baseLinePos = ImGui::GetCursorScreenPos();
+        m_visibleBaseAddress = clipper.DisplayStart * HEX_COLUMNS;
         for (int line = clipper.DisplayStart; line < clipper.DisplayEnd; line++)
         {
             int addr = line * HEX_COLUMNS;
-            ImGui::Text("%04X", addr);
-            ImGui::SameLine(0,0);
-            ImGui::Text(": ");
+            ImGui::Text("%04X: ", addr);
             ImGui::SameLine(0,0);
 
             for (int col = 0; col < HEX_COLUMNS && addr < MEM_SIZE; col++, addr++)
             {   
-                if (addr == m_selectedAddress)
+                if (addr == m_breakPoint)
                 {
-                    ImVec2 pos = ImGui::GetCursorScreenPos();
-                    drawList->AddRectFilled(pos, ImVec2(pos.x + m_sizes.hexCellText.x, pos.y + m_sizes.hexCellText.y), IM_COL32(255, 0, 0, 100));
+                    colourCell(BREAKPOINT_HIGHLIGHT_COLOUR, drawList);
+                }
+                else if (addr == m_selectedAddress)
+                {
+                    colourCell(SELECTED_HIGHLIGHT_COLOUR, drawList);
                 }
 
                 drawHexcell(m_bus->read(addr));
@@ -126,33 +148,33 @@ void HexView::drawMemory()
                     ImGui::SameLine(0,0);
                 }
             }
-            ImGui::Text(" ");
+            ImGui::NewLine();
         }
     }
 
-    ImGui::EndChild();
-
-    ImGui::BeginChild("footer", ImVec2(-FLT_MIN, m_sizes.lineheightWithSpacing * 2));
-
-    if (ImGui::IsMouseClicked(0) && clickInsideMemorywindow())
-    {
-        ImVec2 mousePos = ImGui::GetMousePos();
-        int lineDiff = (mousePos.y - m_baseLinePos.y) / m_sizes.lineheightWithSpacing;
-        int colDiff = (mousePos.x - (m_baseLinePos.x + m_sizes.addressCell.x)) / (m_sizes.hexCell.x);
-        if (colDiff > HEX_COL_MIDPOINT)
-        {
-            colDiff = (mousePos.x - (m_baseLinePos.x + m_sizes.addressCell.x + m_sizes.colMidPointSplit.x)) / (m_sizes.hexCell.x);
-        }
-        m_selectedLinebaseAddress = clipper.DisplayStart + (lineDiff * HEX_COLUMNS);
-        m_selectedAddress = m_selectedLinebaseAddress + (colDiff);
-    }
-
-    ImGui::Text("%04X", m_selectedLinebaseAddress);
-    ImGui::Text("%04X", m_selectedAddress);
     ImGui::EndChild();
 }
 
 void HexView::drawFooter()
 {
+    ImGui::BeginChild("footer", ImVec2(-FLT_MIN, m_sizes.lineheightWithSpacing * 2));
 
+    if (ImGui::IsMouseClicked(0) && clickInsideMemorywindow())
+    {
+        calcSelectedAddress();
+    }
+
+    if (ImGui::Button("Set Breakpoint") && m_selectedAddress != -1)
+    {
+        m_breakPoint = m_selectedAddress;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Remove Breakpoint"))
+    {
+        m_breakPoint = -1;
+    }
+
+    ImGui::EndChild();
 }

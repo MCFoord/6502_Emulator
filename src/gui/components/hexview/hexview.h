@@ -11,13 +11,14 @@ public:
     HexView(std::string id, Bus* bus);
     ~HexView();
     void draw() override;
-    int breakPoint;
+    int m_breakPoint = -1;
 private:
     std::string m_id;
     Bus* m_bus = nullptr;
 
     int m_hexRangeStart = 0;
     int m_hexRangeEnd = 0;
+    int m_visibleBaseAddress = 0;
     int m_selectedLinebaseAddress = 0;
     int m_selectedAddress = -1;
     ImVec2 m_baseLinePos;
@@ -40,4 +41,6 @@ private:
     void drawMemory();
     void drawFooter();
     bool clickInsideMemorywindow();
+    void calcSelectedAddress();
+    void colourCell(ImU32 colour, ImDrawList* dl);
 };
