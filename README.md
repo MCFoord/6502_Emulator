@@ -5,6 +5,7 @@ Developed as part of an NES emulator project [https://github.com/MCFoord/nes_emu
 
 Built on linux, however also runs on windows. 
 
+![](https://github.com/MCFoord/6502_Emulator/raw/master/programscreenshot.png)
 
 ## Build Instructions
 1. recursive clone the repo
