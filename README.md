@@ -21,8 +21,8 @@ Built on linux, however also runs on windows.
 
 
 ## To do
+- [ ] refactor control panel to cpu interface to avoid deep nesting of reference passing
 - [ ] breakpoint to halt porgram execution
 - [ ] file dialog for program selection
-- [ ] refactor control panel to cpu interface to avoid deep nesting of reference passing
 - [ ] add executed intruction debug lists
 - [ ] add ability to jump forward and backwards in instruction list with changes refelcted in memory and registers  
