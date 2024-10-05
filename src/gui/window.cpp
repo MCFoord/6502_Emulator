@@ -9,17 +9,14 @@
 
 
 
-Window::Window(
-    Bus* bus, std::mutex& mtx, std::condition_variable& cv,
-    bool& optionSet, CpuOption& option
-):
-m_bus(bus)
+Window::Window(Controller& controller):
+m_controller(controller)
 {
     initGlfw();
     initGlad();
     initImGui();
 
-    Component* controls = new ControlPanel("Controls", bus, mtx, cv, optionSet, option, this);
+    Component* controls = new ControlPanel("Controls", this, controller);
     m_components.push_back(controls);
     mainLoop();
 }
@@ -86,7 +83,7 @@ void Window::createNewHexView()
 {
     std::string hexViewId = "RAM" + std::to_string(m_components.size());
     std::cout << "RAM" << m_components.size() << hexViewId << "\n";
-    m_components.push_back(new HexView(hexViewId, m_bus));
+    m_components.push_back(new HexView(hexViewId, this, m_controller));
 }
 
 void Window::drawFrame()

@@ -5,28 +5,20 @@
 #include "bus.h"
 #include "cpu6502.h"
 #include "window.h"
+#include "controller.h"
 
 class ControlPanel: public Component
 {
 public:
     ControlPanel(
-        std::string id, Bus* bus, std::mutex& mtx, std::condition_variable& cv,
-        bool& optionSet, CpuOption& option, Window* window
+        std::string id,  Window* parent, Controller& controller
     );
     ~ControlPanel();
     void draw() override;
 private:
     //sizes
-    std::mutex& m_cpuOptionLock;
-    std::condition_variable& m_cpuOptionSetCV;
-    CpuOption& m_chosenOption;
-    bool& m_optionSet;
     std::string m_id;
-    bool m_fileLoaded = false;
-    bool m_showFilePicker = false;
+    Window* m_parent;
+    Controller& m_controller;
     std::string m_programFileName = "Select a program to load";
-    Bus* m_bus = nullptr;
-    Window* m_window = nullptr;
-
-    void setCpuOption(CpuOption chosenOption);
 };

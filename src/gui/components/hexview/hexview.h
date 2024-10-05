@@ -2,19 +2,21 @@
 
 #include <string>
 #include "component.h"
-#include "bus.h"
 #include "imgui.h"
+#include "controller.h"
+#include "window.h"
 
 class HexView: public Component
 {
 public:
-    HexView(std::string id, Bus* bus);
+    HexView(std::string id, Window* parent, Controller& controller);
     ~HexView();
     void draw() override;
     int m_breakPoint = -1;
 private:
     std::string m_id;
-    Bus* m_bus = nullptr;
+    Window* m_parent;
+    Controller& m_controller;
 
     int m_hexRangeStart = 0;
     int m_hexRangeEnd = 0;

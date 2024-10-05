@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include <iostream>
 
+// make a bunch of these configurable
 #define HEX_COLUMNS 16
 #define HEX_ROWS 16
 #define MEM_SIZE 64 * 1024
@@ -9,9 +10,10 @@
 #define SELECTED_HIGHLIGHT_COLOUR IM_COL32(0, 255, 0, 100)
 #define BREAKPOINT_HIGHLIGHT_COLOUR IM_COL32(255, 0, 0, 100)
 
-HexView::HexView(std::string id, Bus* bus):
+HexView::HexView(std::string id, Window* parent, Controller& controller):
 m_id(id),
-m_bus(bus)
+m_parent(parent),
+m_controller(controller)
 {
     
 }
@@ -47,8 +49,14 @@ bool HexView::clickInsideMemorywindow()
 {
     ImVec2 mousePos = ImGui::GetMousePos();
     ImVec2 windowPos = ImGui::GetWindowPos();
-    ImVec2 MemeoryWindowPos = ImVec2(windowPos.x + m_sizes.addressCell.x, windowPos.y - m_sizes.lineHeight * HEX_ROWS);
-    ImVec2 MemoryWindowSize = ImVec2(ImGui::GetWindowSize().x - m_sizes.addressCell.x, m_sizes.lineHeight * HEX_ROWS);
+    ImVec2 MemeoryWindowPos = ImVec2(
+        windowPos.x + m_sizes.addressCell.x,
+        windowPos.y - m_sizes.lineHeight * HEX_ROWS
+    );
+    ImVec2 MemoryWindowSize = ImVec2(
+        ImGui::GetWindowSize().x - m_sizes.addressCell.x,
+        m_sizes.lineHeight * HEX_ROWS
+    );
 
     bool isInsideX = mousePos.x > MemeoryWindowPos.x && mousePos.x < (MemeoryWindowPos.x + MemoryWindowSize.x);
     bool isInsideY = mousePos.y > MemeoryWindowPos.y && mousePos.y < (MemeoryWindowPos.y + MemoryWindowSize.y);
@@ -61,10 +69,12 @@ void HexView::calcSelectedAddress()
     ImVec2 mousePos = ImGui::GetMousePos();
     int lineDiff = (mousePos.y - m_baseLinePos.y) / m_sizes.lineheightWithSpacing;
     int colDiff = (mousePos.x - (m_baseLinePos.x + m_sizes.addressCell.x)) / (m_sizes.hexCell.x);
+
     if (colDiff > HEX_COL_MIDPOINT)
     {
         colDiff = (mousePos.x - (m_baseLinePos.x + m_sizes.addressCell.x + m_sizes.colMidPointSplit.x)) / (m_sizes.hexCell.x);
     }
+
     m_selectedLinebaseAddress = m_visibleBaseAddress + (lineDiff * HEX_COLUMNS);
     m_selectedAddress = m_selectedLinebaseAddress + (colDiff);
 }
@@ -85,7 +95,10 @@ void HexView::drawHeader()
 {
     ImGui::BeginChild("header", ImVec2(-FLT_MIN, m_sizes.lineheightWithSpacing));
 
-    ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + m_sizes.addressCell.x, ImGui::GetCursorPosY()));
+    ImGui::SetCursorPos(ImVec2(
+        ImGui::GetCursorPosX() + m_sizes.addressCell.x,
+        ImGui::GetCursorPosY()
+    ));
     for (int col = 0; col < HEX_COLUMNS; col++)
     {
         drawHexcell(col);
@@ -140,7 +153,7 @@ void HexView::drawMemory()
                     colourCell(SELECTED_HIGHLIGHT_COLOUR, drawList);
                 }
 
-                drawHexcell(m_bus->read(addr));
+                drawHexcell(m_controller.readBus(addr));
 
                 if (col == HEX_COL_MIDPOINT)
                 {
@@ -175,6 +188,10 @@ void HexView::drawFooter()
     {
         m_breakPoint = -1;
     }
+
+    ImGui::SameLine();
+
+    
 
     ImGui::EndChild();
 }
