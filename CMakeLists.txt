@@ -14,6 +14,6 @@ add_executable(6502Emulator
 )
 
 target_link_libraries(6502Emulator PRIVATE
-    6502
+    core
     gui
 )

@@ -1,6 +1,6 @@
 #pragma once
 
-enum class CpuOption
+enum class ControlAction
 {
     NONE,
     EXECUTE,

@@ -1,2 +1,2 @@
-add_subdirectory(6502)
+add_subdirectory(core)
 add_subdirectory(gui)

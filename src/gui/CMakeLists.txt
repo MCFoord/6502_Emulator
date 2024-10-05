@@ -21,5 +21,5 @@ target_link_libraries(gui PUBLIC
 )
 
 target_link_libraries(gui PRIVATE
-    6502
+    core
 )
