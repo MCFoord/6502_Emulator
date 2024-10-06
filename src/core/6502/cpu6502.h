@@ -67,6 +67,7 @@ public:
     void execute();
     void run(int numOperations);
     void run(bool& shouldStop);
+    void run(bool& shouldStop, const std::vector<int> breakpoints);
     void run();
     
 

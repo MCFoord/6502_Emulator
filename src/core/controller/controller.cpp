@@ -6,6 +6,7 @@ Controller::Controller()
     m_bus = Bus();
     m_cpu = CPU6502();
     m_cpu.connectBus(&m_bus);
+    m_breakpoints = std::vector<int>();
     beginCpu();
 }
 

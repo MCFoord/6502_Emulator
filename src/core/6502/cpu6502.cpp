@@ -1,6 +1,7 @@
 #include <sstream>
 #include <iomanip>
 #include <iostream>
+#include <algorithm>
 #include "cpu6502.h"
 #include "bus.h"
 
@@ -434,6 +435,20 @@ void CPU6502::run(bool& shouldStop)
         else
         {
             currentPC = pc;
+        }
+    }
+}
+
+void CPU6502::run(bool& shouldStop, std::vector<int> breakpoints)
+{
+    while (currentInstruction.instructionName != "ILL" && !shouldStop)
+    {
+        execute();
+
+        if (std::binary_search(breakpoints.begin(), breakpoints.end(), pc))
+        {
+            std::cout << "BREAKPOINT" << '\n';
+            shouldStop = true;
         }
     }
 }
