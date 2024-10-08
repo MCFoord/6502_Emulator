@@ -68,10 +68,20 @@ void ControlPanel::draw()
         m_controller.setAction(ControlAction::RESET);
     }
 
-    if (ImGui::Button("Run", ImVec2(200, 100)))
+    if(!m_controller.cpuIsRunning())
     {
-        //run program until an illegal operation is encountered or program is finished
-        m_controller.setAction(ControlAction::RUN);
+        if (ImGui::Button("Run", ImVec2(200, 100)))
+        {
+            //run program until an illegal operation is encountered or program is finished
+            m_controller.setAction(ControlAction::RUN);
+        }
+    }
+    else
+    {
+        if (ImGui::Button("Stop", ImVec2(200, 100)))
+        {
+            m_controller.stopCpu();
+        }
     }
     
     if (ImGui::Button("Quit", ImVec2(200, 100)))

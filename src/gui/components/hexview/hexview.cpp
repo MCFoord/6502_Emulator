@@ -144,7 +144,7 @@ void HexView::drawMemory()
 
             for (int col = 0; col < HEX_COLUMNS && addr < MEM_SIZE; col++, addr++)
             {   
-                if (addr == m_breakPoint)
+                if (m_controller.isBreakpoint(addr))
                 {
                     colourCell(BREAKPOINT_HIGHLIGHT_COLOUR, drawList);
                 }
@@ -179,14 +179,14 @@ void HexView::drawFooter()
 
     if (ImGui::Button("Set Breakpoint") && m_selectedAddress != -1)
     {
-        m_breakPoint = m_selectedAddress;
+        m_controller.addBreakpoint(m_selectedAddress);
     }
 
     ImGui::SameLine();
 
     if (ImGui::Button("Remove Breakpoint"))
     {
-        m_breakPoint = -1;
+        m_controller.removeBreakpoint(m_selectedAddress);
     }
 
     ImGui::SameLine();
