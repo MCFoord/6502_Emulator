@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "controller.h"
 
 Controller::Controller()
@@ -18,6 +19,72 @@ Controller::~Controller()
 void Controller::beginCpu()
 {
     m_cpuControlThread = std::thread([this] { cpuControl(); });
+}
+
+bool Controller::cpuIsRunning()
+{
+    return m_cpuIsRunning;
+}
+
+void Controller::stopCpu()
+{
+    m_stopCPUExecution = true;
+    m_cpuIsRunning = false;
+}
+
+void Controller::loadProgram(std::string fileName)
+{
+    if (cpuIsRunning()) { stopCpu(); }
+
+    m_bus.loadProgram(fileName.c_str());
+}
+
+void Controller::unloadProgram()
+{
+    if (cpuIsRunning()) { stopCpu(); }
+
+    m_bus.clearmemory();
+}
+
+void Controller::setAction(ControlAction action)   
+{
+    std::lock_guard<std::mutex> lock(m_actionMutex);
+    m_chosenAction = action;
+    m_actionChosen = true;
+    m_actionCV.notify_all();
+}
+
+void Controller::addBreakpoint(int addr)
+{
+    std::vector<int>::iterator it = std::lower_bound(
+        m_breakpoints.begin(), m_breakpoints.end(), addr
+    );
+    m_breakpoints.insert(it, addr);
+}
+
+bool Controller::removeBreakpoint(int addr)
+{
+    std::vector<int>::iterator it = std::find(
+        m_breakpoints.begin(), m_breakpoints.end(), addr
+    );
+
+    if (it != m_breakpoints.end())
+    {
+        m_breakpoints.erase(it);
+        return true;
+    }
+
+    return false;
+}
+
+bool Controller::isBreakpoint(int addr)
+{
+    return std::binary_search(m_breakpoints.begin(), m_breakpoints.end(), addr);
+}
+
+uint8_t Controller::readBus(uint16_t addr)
+{
+    return m_bus.read(addr);
 }
 
 void Controller::cpuControl()
@@ -53,29 +120,6 @@ void Controller::cpuControl()
     }
 }
 
-void Controller::setAction(ControlAction action)   
-{
-    std::lock_guard<std::mutex> lock(m_actionMutex);
-    m_chosenAction = action;
-    m_actionChosen = true;
-    m_actionCV.notify_all();
-}
-
-void Controller::loadProgram(std::string fileName)
-{
-    m_bus.loadProgram(fileName.c_str());
-}
-
-void Controller::unloadProgram()
-{
-    m_bus.clearmemory();
-}
-
-uint8_t Controller::readBus(uint16_t addr)
-{
-    return m_bus.read(addr);
-}
-
 void Controller::cpuExecute()
 {
     m_cpu.execute();
@@ -83,10 +127,14 @@ void Controller::cpuExecute()
 
 void Controller::cpuRun()
 {
-    m_cpu.run();
+    m_stopCPUExecution = false;
+    m_cpuIsRunning = true;
+    m_cpu.run(m_stopCPUExecution, m_breakpoints);
 }
 
+//possible hanging issue
 void Controller::cpuReset()
 {
+    if (cpuIsRunning()) { stopCpu(); }
     m_cpu.reset();
 }

@@ -13,12 +13,15 @@ public:
     Controller();
     ~Controller();
     void beginCpu();
+    bool cpuIsRunning();
+    void stopCpu();
     void loadProgram(std::string fileName);
     void unloadProgram();
     void setAction(ControlAction action);
+    void addBreakpoint(int addr);
+    bool removeBreakpoint(int addr);
+    bool isBreakpoint(int addr);
     uint8_t readBus(uint16_t addr);
-    void addBreakPoint();
-    void removeBreakPoint();
     //need a graceful way to quit
 
 private:
@@ -26,6 +29,7 @@ private:
     Bus m_bus;
     CPU6502 m_cpu;
     bool m_stopCPUExecution = false;
+    bool m_cpuIsRunning = false;
     ControlAction m_chosenAction = ControlAction::NONE;
     std::mutex m_actionMutex;
     std::condition_variable m_actionCV;
