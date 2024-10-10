@@ -23,9 +23,13 @@ m_controller(controller)
 
 Window::~Window()
 {
+    std::cout << "Ending CPU Thread\n";
+    m_controller.endCpuThread();
+    std::cout << "Terminating ImGui\n";
     terminateImGui();
+    std::cout << "Terminating GLFW\n";
     terminateGlfw();
-
+    std::cout << "Deleting Components\n";
     for (Component* component : m_components)
     {
         delete component;
@@ -100,7 +104,7 @@ void Window::drawFrame()
 
 void Window::mainLoop()
 {
-    while (!glfwWindowShouldClose(m_window)) {
+    while (!glfwWindowShouldClose(m_window) && !m_quitProgram) {
         // Input
         glfwPollEvents();
 
@@ -118,6 +122,11 @@ void Window::mainLoop()
         // Swap buffers
         glfwSwapBuffers(m_window);
     }
+}
+
+void Window::setProgramToQuit()
+{
+    m_quitProgram = true;
 }
 
 void Window::terminateImGui()

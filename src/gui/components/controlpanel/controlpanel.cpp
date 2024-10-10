@@ -86,7 +86,7 @@ void ControlPanel::draw()
     
     if (ImGui::Button("Quit", ImVec2(200, 100)))
     {
-        m_controller.setAction(ControlAction::QUIT);
+        m_parent->setProgramToQuit();
     }
 
     ImGui::End();

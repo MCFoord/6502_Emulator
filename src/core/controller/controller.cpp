@@ -8,7 +8,7 @@ Controller::Controller()
     m_cpu = CPU6502();
     m_cpu.connectBus(&m_bus);
     m_breakpoints = std::vector<int>();
-    beginCpu();
+    beginCpuThread();
 }
 
 Controller::~Controller()
@@ -16,9 +16,21 @@ Controller::~Controller()
 
 }
 
-void Controller::beginCpu()
+void Controller::beginCpuThread()
 {
     m_cpuControlThread = std::thread([this] { cpuControl(); });
+}
+
+void Controller::endCpuThread()
+{
+    if (cpuIsRunning()) { stopCpu(); }
+    setAction(ControlAction::QUIT);
+    if (m_cpuControlThread.joinable())
+    {
+        std::cout << "Waiting for thread to join\n";
+        m_cpuControlThread.join();
+        std::cout << "Thread Terminated\n";
+    }
 }
 
 bool Controller::cpuIsRunning()
@@ -111,11 +123,9 @@ void Controller::cpuControl()
                 cpuReset();
                 break;
             case ControlAction::QUIT:
-                std::cout << "QUIT" << '\n';
                 shouldQuit = true;
                 break;
         }
-
         m_actionChosen = false;
     }
 }

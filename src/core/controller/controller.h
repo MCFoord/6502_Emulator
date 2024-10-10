@@ -12,7 +12,8 @@ class Controller
 public:
     Controller();
     ~Controller();
-    void beginCpu();
+    void beginCpuThread();
+    void endCpuThread();
     bool cpuIsRunning();
     void stopCpu();
     void loadProgram(std::string fileName);
