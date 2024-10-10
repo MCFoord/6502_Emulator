@@ -27,3 +27,8 @@ Built on linux, however also runs on windows.
 - [ ] file dialog for program selection
 - [ ] add executed intruction debug lists
 - [ ] add ability to jump forward and backwards in instruction list with changes refelcted in memory and registers  
+
+
+### Known Bugs
+- [ ] highlighted cells still show when memory location scrolls out of windows
+- [ ] program crashes on windows when adding more than one hexview
