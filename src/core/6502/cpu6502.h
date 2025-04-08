@@ -100,6 +100,10 @@ private:
     void zeroPageX();
     void zeroPageY();
 
+    //interrupts
+    void NMI();
+    void IRQ();
+
     //instructions
     void ADC();
     void AND();

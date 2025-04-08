@@ -622,6 +622,36 @@ void CPU6502::zeroPageY()
     currentValue = read(currentAddress);
 }
 
+//interrupts
+void CPU6502::NMI()
+{
+    setFlag(CPU6502::B, false);
+    setFlag(CPU6502::U, false);
+
+    pc++;
+    push((pc >> 8) & 0xFF);
+    push(pc & 0xFF);
+    push(status);
+
+    setFlag(CPU6502::I, true);
+
+    pc = (read(0xFFFB) << 8) | read(0xFFFA);
+}
+
+void CPU6502::IRQ()
+{
+    setFlag(CPU6502::B, false);
+    setFlag(CPU6502::U, false);
+
+    pc++;
+    push((pc >> 8) & 0xFF);
+    push(pc & 0xFF);
+    push(status);
+
+    setFlag(CPU6502::I, true);
+
+    pc = (read(0xFFFF) << 8) | read(0xFFFE);
+}
 
 // inctructions
 void CPU6502::ADC()
