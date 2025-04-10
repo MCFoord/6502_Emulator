@@ -4,8 +4,9 @@
 #include <mutex>
 #include <condition_variable>
 #include <string>
-#include "bus.h"
-#include "controlaction.h"
+#include "Bus.h"
+#include "CPU6502.h"
+#include "ControlAction.h"
 
 class Controller
 {

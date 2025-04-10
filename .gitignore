@@ -38,3 +38,5 @@ build/
 # imgui files
 imgui.ini
 imgui*.ini
+
+*.DS_store

@@ -1,6 +1,5 @@
-#include <iostream>
-#include "window.h"
-#include "controller.h"
+#include "Window.h"
+#include "Controller.h"
 
 
 int main(int argc, char **argv) {

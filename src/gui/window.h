@@ -2,8 +2,8 @@
 
 #include <vector>
 #include <GLFW/glfw3.h>
-#include "component.h"
-#include "controller.h"
+#include "Component.h"
+#include "Controller.h"
 
 class Window
 {

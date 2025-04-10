@@ -2,8 +2,8 @@
 #include <iomanip>
 #include <iostream>
 #include <algorithm>
-#include "cpu6502.h"
-#include "bus.h"
+#include "CPU6502.h"
+#include "Bus.h"
 
 #define ILLEGAL(opcode) {opcode, "ILL", "implicit", &CPU6502::implicit, &CPU6502::ILL, 2}
 
@@ -640,6 +640,9 @@ void CPU6502::NMI()
 
 void CPU6502::IRQ()
 {
+    if (getFlag(CPU6502::I))
+        return;
+    
     setFlag(CPU6502::B, false);
     setFlag(CPU6502::U, false);
 

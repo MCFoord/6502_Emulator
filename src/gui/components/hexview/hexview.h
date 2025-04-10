@@ -3,8 +3,8 @@
 #include <string>
 #include "component.h"
 #include "imgui.h"
-#include "controller.h"
-#include "window.h"
+#include "Controller.h"
+#include "Window.h"
 
 class HexView: public Component
 {

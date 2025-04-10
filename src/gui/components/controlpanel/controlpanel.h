@@ -1,11 +1,9 @@
 #pragma once
 
 #include <string>
-#include "component.h"
-#include "bus.h"
-#include "cpu6502.h"
-#include "window.h"
-#include "controller.h"
+#include "Component.h"
+#include "Window.h"
+#include "Controller.h"
 
 class ControlPanel: public Component
 {

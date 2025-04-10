@@ -1,18 +1,18 @@
 project(gui)
 
-set(COMPONENTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/components)
+set(COMPONENTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Components)
 
 add_library(gui STATIC
-    window.cpp
-    ${COMPONENTS_DIR}/hexview/hexview.cpp
-    ${COMPONENTS_DIR}/controlpanel/controlpanel.cpp
+    Window.cpp
+    ${COMPONENTS_DIR}/Hexview/Hexview.cpp
+    ${COMPONENTS_DIR}/ControlPanel/ControlPanel.cpp
 )
 
 target_include_directories(gui PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${COMPONENTS_DIR}
-    ${COMPONENTS_DIR}/hexview
-    ${COMPONENTS_DIR}/controlpanel
+    ${COMPONENTS_DIR}/Hexview
+    ${COMPONENTS_DIR}/ControlPanel
 )
 
 target_link_libraries(gui PUBLIC

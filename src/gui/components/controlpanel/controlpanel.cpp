@@ -1,5 +1,5 @@
 #include <filesystem>
-#include "controlpanel.h"
+#include "ControlPanel.h"
 #include "imgui.h"
 #include "window.h"
 

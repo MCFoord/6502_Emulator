@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include "bus.h"
+#include "Bus.h"
 
 uint8_t Bus::read(uint16_t addr)
 {

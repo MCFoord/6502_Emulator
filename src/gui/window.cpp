@@ -1,8 +1,8 @@
 #include <iostream>
 #include <glad/gl.h>
-#include "window.h"
-#include "controlpanel.h"
-#include "hexview.h"
+#include "Window.h"
+#include "ControlPanel.h"
+#include "HexView.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -95,10 +95,15 @@ void Window::drawFrame()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
-        for (auto& component : m_components)
+        int i = 0;
+        for (auto component : m_components)
         {
-            component->draw();
+            if (component)
+                component->draw();
+            else
+                std::cout << "Panic: " << i << " - " << &component << " length: " << m_components.size() << "\n";
+
+            i++;
         }
 }
 

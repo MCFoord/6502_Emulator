@@ -1,2 +1,3 @@
-add_subdirectory(core)
-add_subdirectory(gui)
+add_subdirectory(Core)
+add_subdirectory(GUI)
+# add_subdirectory(Tools)
