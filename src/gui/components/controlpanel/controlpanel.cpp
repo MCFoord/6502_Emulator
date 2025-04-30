@@ -1,7 +1,7 @@
 #include <filesystem>
 #include "ControlPanel.h"
 #include "imgui.h"
-#include "window.h"
+#include "Window.h"
 
 ControlPanel::ControlPanel(
     std::string id, Window* parent, Controller& controller
@@ -30,8 +30,10 @@ void ControlPanel::draw()
         for (const auto & entry : std::filesystem::directory_iterator(programDir))
         {
             if (ImGui::Selectable(entry.path().string().c_str()))
+            {
                 m_programFileName = entry.path().string();
                 ImGui::SetItemDefaultFocus();
+            }
         }
         ImGui::EndCombo();
     }

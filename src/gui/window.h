@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <vector>
 #include <GLFW/glfw3.h>
 #include "Component.h"
@@ -17,6 +18,7 @@ private:
     GLFWwindow* m_window = nullptr;
     std::vector<Component*> m_components;
     bool m_quitProgram = false;
+    std::atomic_int m_nComponents = 0;
 
     bool initGlfw();
     bool initGlad();

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "component.h"
+#include "Component.h"
 #include "imgui.h"
 #include "Controller.h"
 #include "Window.h"

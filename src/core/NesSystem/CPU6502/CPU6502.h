@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -49,7 +50,7 @@ public:
         N = (1 << 7)
     };
 
-    void connectBus(Bus *b);
+    void connectBus(std::shared_ptr<Bus> bus) { m_bus = bus; }
 
     bool getFlag(CPUFLAGS flag);
     void setFlag(CPUFLAGS flag, bool set);
@@ -79,7 +80,7 @@ public:
     void execute(std::ostream& output);
 
 private:
-    Bus *bus = nullptr;
+    std::shared_ptr<Bus> m_bus = nullptr;
 
     //addressing modes
     void implicit();

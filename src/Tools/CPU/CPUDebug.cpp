@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <ncurses.h>
 #include <CPU6502.h>
 #include <Bus.h>
@@ -36,8 +37,8 @@ int main(int argc, char **argv)
         break;
     }
 
-    CPU6502* cpu = new CPU6502();
-    Bus* bus1 = new Bus();
+    std::shared_ptr<CPU6502> cpu = std::make_shared<CPU6502>();
+    std::shared_ptr<Bus> bus1 = std::make_shared<Bus>();
 
 
     cpu->connectBus(bus1);

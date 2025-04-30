@@ -1,3 +1,4 @@
+#include <memory>
 #include <sstream>
 #include <iomanip>
 #include <iostream>
@@ -335,12 +336,12 @@ void CPU6502::fetch()
 
 uint8_t CPU6502::read(uint16_t addr)
 {
-    return bus->read(addr);
+    return m_bus->read(addr);
 }
 
 void CPU6502::write(uint16_t addr, uint8_t value)
 {
-    bus->write(addr, value);
+    m_bus->write(addr, value);
 }
 
 void CPU6502::push(uint8_t value)
@@ -370,11 +371,6 @@ void CPU6502::setFlag(CPUFLAGS flag, bool set)
     {
         status &= ~(flag);
     }
-}
-
-void CPU6502::connectBus(Bus *b)
-{
-    bus = b;
 }
 
 void CPU6502::tick()
@@ -560,7 +556,7 @@ void CPU6502::indirectY()
     currentAddress = ((read(highByte) << 8) | read(lowByte)) + y;
     
     //FIX THIS to match the change above
-    if (currentAddress & 0xFF00 != highByte)
+    if ((currentAddress & 0xFF00) != highByte)
     {
         cycles++;
     }
@@ -593,7 +589,7 @@ void CPU6502::absoluteY()
 
     currentAddress = ((highByte << 8) | lowByte) + y;
 
-    if (currentAddress & 0xFF00 != highByte)
+    if ((currentAddress & 0xFF00) != highByte)
     {
         cycles++;
     }
@@ -717,7 +713,7 @@ void CPU6502::BCC()
     {
         cycles++;
 
-        if (currentAddress & 0xFF00 != pc & 0xFF00)
+        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
         {
             cycles++;
         }
@@ -733,7 +729,7 @@ void CPU6502::BCS()
         cycles++;
         uint16_t rel = pc + currentValue;
 
-        if (currentAddress & 0xFF00 != pc & 0xFF00)
+        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
         {
             cycles++;
         }
@@ -749,7 +745,7 @@ void CPU6502::BEQ()
         cycles++;
         uint16_t rel = pc + currentValue;
 
-        if (currentAddress & 0xFF00 != pc & 0xFF00)
+        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
         {
             cycles++;
         }
@@ -774,7 +770,7 @@ void CPU6502::BMI()
         cycles++;
         uint16_t rel = pc + currentValue;
 
-        if (currentAddress & 0xFF00 != pc & 0xFF00)
+        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
         {
             cycles++;
         }
@@ -789,7 +785,7 @@ void CPU6502::BNE()
     {
         cycles++;
 
-        if (currentAddress & 0xFF00 != pc & 0xFF00)
+        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
         {
             cycles++;
         }
@@ -805,7 +801,7 @@ void CPU6502::BPL()
         cycles++;
         uint16_t rel = pc + currentValue;
 
-        if (currentAddress & 0xFF00 != pc & 0xFF00)
+        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
         {
             cycles++;
         }
@@ -836,7 +832,7 @@ void CPU6502::BVC()
         cycles++;
         uint16_t rel = pc + currentValue;
 
-        if (currentAddress & 0xFF00 != pc & 0xFF00)
+        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
         {
             cycles++;
         }
@@ -852,7 +848,7 @@ void CPU6502::BVS()
         cycles++;
         uint16_t rel = pc + currentValue;
 
-        if (currentAddress & 0xFF00 != pc & 0xFF00)
+        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
         {
             cycles++;
         }

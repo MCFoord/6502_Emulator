@@ -1,12 +1,12 @@
 #pragma once
 
+#include <memory>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <string>
-#include "Bus.h"
-#include "CPU6502.h"
 #include "ControlAction.h"
+#include "NesSystem.h"
 
 class Controller
 {
@@ -28,8 +28,7 @@ public:
 
 private:
     std::thread m_cpuControlThread;
-    Bus m_bus;
-    CPU6502 m_cpu;
+    std::shared_ptr<NESSystem> m_nes;
     bool m_stopCPUExecution = false;
     bool m_cpuIsRunning = false;
     ControlAction m_chosenAction = ControlAction::NONE;

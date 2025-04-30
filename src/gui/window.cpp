@@ -18,6 +18,7 @@ m_controller(controller)
 
     Component* controls = new ControlPanel("Controls", this, controller);
     m_components.push_back(controls);
+    m_nComponents++;
     mainLoop();
 }
 
@@ -86,8 +87,8 @@ void Window::initImGui()
 void Window::createNewHexView()
 {
     std::string hexViewId = "RAM" + std::to_string(m_components.size());
-    std::cout << "RAM" << m_components.size() << hexViewId << "\n";
     m_components.push_back(new HexView(hexViewId, this, m_controller));
+    m_nComponents += (m_nComponents + 1 <= m_components.size()) ? 1 : 0;
 }
 
 void Window::drawFrame()
@@ -95,16 +96,9 @@ void Window::drawFrame()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        int i = 0;
-        for (auto component : m_components)
-        {
-            if (component)
-                component->draw();
-            else
-                std::cout << "Panic: " << i << " - " << &component << " length: " << m_components.size() << "\n";
 
-            i++;
-        }
+        for (int i = 0; i < m_nComponents; i++)
+            m_components[i]->draw();
 }
 
 void Window::mainLoop()
