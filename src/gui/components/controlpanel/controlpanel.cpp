@@ -25,13 +25,13 @@ void ControlPanel::draw()
     //change this to use the path object
     std::string programDir = std::filesystem::current_path().string() + "/programs";
 
-    if (ImGui::BeginCombo("##combo", m_programFileName.c_str()))
+    if (ImGui::BeginCombo("##combo", (m_programFilePath.empty()) ? m_kdefaultProgramText.c_str() : m_programFilePath.c_str()))
     {
         for (const auto & entry : std::filesystem::directory_iterator(programDir))
         {
             if (ImGui::Selectable(entry.path().string().c_str()))
             {
-                m_programFileName = entry.path().string();
+                m_programFilePath = entry.path();
                 ImGui::SetItemDefaultFocus();
             }
         }
@@ -42,7 +42,7 @@ void ControlPanel::draw()
     {
         //load program
         m_controller.setAction(ControlAction::RESET);
-        m_controller.loadProgram(m_programFileName);
+        m_controller.loadProgram(m_programFilePath);
         //i think i'll need a better solution for this (technically potential for a race) but should be okay for now
     }
 
@@ -51,6 +51,7 @@ void ControlPanel::draw()
         //set all ram to 0x00
         m_controller.setAction(ControlAction::RESET);
         m_controller.unloadProgram();
+        m_programFilePath.clear();
     }
 
     if (ImGui::Button("Add memory view", ImVec2(200, 100)))

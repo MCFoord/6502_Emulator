@@ -4,9 +4,36 @@
 #include <CPU6502.h>
 #include <Bus.h>
 #include <fstream>
+#include <sstream>
 
 #define WINDOW_HEIGHT 50
 #define WINDOW_WIDTH 50
+
+std::string memToString(uint16_t start, uint16_t end)
+{
+
+    std::stringstream ss;
+    int count = 0;
+    ss << "    ";
+    for (int i = 0; i < 16; ++i)
+    {
+        ss << std::setfill('0') << std::setw(2) << std::hex << i << " ";
+    }
+
+    ss << "\n";
+
+    for (uint16_t i = start; i <= end; ++i)
+    {
+        if (count % 16 == 0)
+        {
+            ss << "\n" << std::setfill('0') << std::setw(2) << std::hex << count / 16 << "  ";
+        }
+        ss << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(ram[i]) << " ";
+        ++count;
+    }
+
+    return ss.str();
+}
 
 int main(int argc, char **argv)
 {

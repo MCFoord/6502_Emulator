@@ -27,4 +27,10 @@ private:
 	std::vector<uint8_t> m_PRGROM;
 	std::vector<uint8_t> m_CHRRAM; //will be rom or ram depending on the mapper
 	std::shared_ptr<Mapper> m_mapper = nullptr;
+
+//UI memview methods
+public:
+	uint8_t PRGROMRead(uint16_t addr);
+	uint8_t PRGRAMRead(uint16_t addr);
+	uint8_t CHRRAMRead(uint16_t addr);
 };

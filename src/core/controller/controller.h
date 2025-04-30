@@ -17,7 +17,7 @@ public:
     void endCpuThread();
     bool cpuIsRunning();
     void stopCpu();
-    void loadProgram(std::string fileName);
+    void loadProgram(std::filesystem::path path);
     void unloadProgram();
     void setAction(ControlAction action);
     void addBreakpoint(int addr);

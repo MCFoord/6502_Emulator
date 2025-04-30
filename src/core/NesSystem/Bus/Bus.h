@@ -9,7 +9,7 @@
 class Bus
 {
 public:
-    
+    Bus() : m_RAM(2 * 1024) {}
 
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t value);
@@ -20,14 +20,12 @@ public:
     void PPUWrite(uint16_t addr, uint8_t value);
 
     void connectCartridge(std::shared_ptr<Cartridge> cartridge) { m_cartridge = cartridge; }
+    void disconnectCartridge() { m_cartridge = nullptr; }
 
-    //return string of the values in memory from start address to end address inclusive
-    std::string memToString(uint16_t start, uint16_t end);
-
-    void loadProgram(const char* fileName);
-    void clearmemory();
+    // void loadProgram(const char* fileName);
+    // void clearmemory();
 
 private:
-    uint8_t ram[64 * 1024];
+    std::vector<uint8_t> m_RAM;
     std::shared_ptr<Cartridge> m_cartridge;
 };

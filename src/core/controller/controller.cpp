@@ -3,9 +3,7 @@
 
 Controller::Controller()
 {
-    m_bus = std::make_shared<Bus>();
-    m_cpu = std::make_shared<CPU6502>();
-    m_cpu->connectBus(m_bus);
+    m_nes = std::make_shared<NESSystem>();
     m_breakpoints = std::vector<int>();
     beginCpuThread();
 }
@@ -43,18 +41,18 @@ void Controller::stopCpu()
     m_cpuIsRunning = false;
 }
 
-void Controller::loadProgram(std::string fileName)
+void Controller::loadProgram(std::filesystem::path path)
 {
     if (cpuIsRunning()) { stopCpu(); }
 
-    m_bus->loadProgram(fileName.c_str());
+    m_nes->LoadCartridge(path);
 }
 
 void Controller::unloadProgram()
 {
     if (cpuIsRunning()) { stopCpu(); }
 
-    m_bus->clearmemory();
+    m_nes->UnloadCartridge();
 }
 
 void Controller::setAction(ControlAction action)   
@@ -95,7 +93,7 @@ bool Controller::isBreakpoint(int addr)
 
 uint8_t Controller::readBus(uint16_t addr)
 {
-    return m_bus->read(addr);
+    // return m_bus->read(addr);
 }
 
 void Controller::cpuControl()
@@ -134,19 +132,19 @@ void Controller::cpuControl()
 
 void Controller::cpuExecute()
 {
-    m_cpu->execute();
+    // m_cpu->execute();
 }
 
 void Controller::cpuRun()
 {
     m_stopCPUExecution = false;
     m_cpuIsRunning = true;
-    m_cpu->run(m_stopCPUExecution, m_breakpoints);
+    // m_cpu->run(m_stopCPUExecution, m_breakpoints);
 }
 
 //possible hanging issue
 void Controller::cpuReset()
 {
     if (cpuIsRunning()) { stopCpu(); }
-    m_cpu->reset();
+    // m_cpu->reset();
 }

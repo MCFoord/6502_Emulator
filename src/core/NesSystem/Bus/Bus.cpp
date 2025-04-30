@@ -1,14 +1,10 @@
-#include <sstream>
-#include <fstream>
-#include <iostream>
-#include <iomanip>
 #include "Bus.h"
 
 uint8_t Bus::read(uint16_t addr)
 {
     if (addr > 0x000 && addr <= 0xFFFF)
     {
-        return ram[addr];
+        return m_RAM[addr];
     }
     return 0;
 }
@@ -17,14 +13,14 @@ void Bus::write(uint16_t addr, uint8_t value)
 {
     if (addr > 0x000 && addr <= 0xFFFF)
     {
-        ram[addr] = value;
+        m_RAM[addr] = value;
     }
 }
 
 uint8_t Bus::CPURead(uint16_t addr)
 {
     if (addr <= 0x1FFF)
-        return ram[addr & 0x07FF];
+        return m_RAM[addr & 0x07FF];
     else if (addr <= 0x3FFF)
         return 0; // PPU stuff - nothing for now
     else if (addr <= 0x401F)
@@ -37,7 +33,7 @@ uint8_t Bus::CPURead(uint16_t addr)
 void Bus::CPUWrite(uint16_t addr, uint8_t value)
 {
     if (addr <= 0x1FFF)
-        ram[addr & 0x07FF] = value;
+        m_RAM[addr & 0x07FF] = value;
     else if (addr <= 0x3FFF)
         return; // PPU stuff - nothing for now
     else if (addr <= 0x401F)
@@ -57,47 +53,20 @@ void Bus::PPUWrite(uint16_t addr, uint8_t value)
     
 }
 
+// void Bus::loadProgram(const char* fileName)
+// {
+//     std::ifstream file(fileName, std::ios::binary);
+//     file.seekg (0, file.end);
+//     int length = file.tellg();
+//     file.seekg (0, file.beg);
 
-std::string Bus::memToString(uint16_t start, uint16_t end)
-{
+//     file.read(reinterpret_cast<char*>(ram), length);
+// }
 
-    std::stringstream ss;
-    int count = 0;
-    ss << "    ";
-    for (int i = 0; i < 16; ++i)
-    {
-        ss << std::setfill('0') << std::setw(2) << std::hex << i << " ";
-    }
-
-    ss << "\n";
-
-    for (uint16_t i = start; i <= end; ++i)
-    {
-        if (count % 16 == 0)
-        {
-            ss << "\n" << std::setfill('0') << std::setw(2) << std::hex << count / 16 << "  ";
-        }
-        ss << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(ram[i]) << " ";
-        ++count;
-    }
-
-    return ss.str();
-}
-
-void Bus::loadProgram(const char* fileName)
-{
-    std::ifstream file(fileName, std::ios::binary);
-    file.seekg (0, file.end);
-    int length = file.tellg();
-    file.seekg (0, file.beg);
-
-    file.read(reinterpret_cast<char*>(ram), length);
-}
-
-void Bus::clearmemory()
-{
-    for (int i = 0x0000; i <= 0xFFFF; i++)
-    {
-        ram[i] = 0x00;
-    }
-}
+// void Bus::clearmemory()
+// {
+//     for (int i = 0x0000; i <= 0xFFFF; i++)
+//     {
+//         ram[i] = 0x00;
+//     }
+// }

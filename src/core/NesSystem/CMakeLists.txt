@@ -6,6 +6,7 @@ set(CART_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Cartridge)
 set(MAPPER_DIR ${CART_DIR}/Mappers)
 
 add_library(nes STATIC
+    NesSystem.cpp
     ${6502_DIR}/CPU6502.cpp
     ${BUS_DIR}/Bus.cpp
     ${CART_DIR}/Cartridge.cpp

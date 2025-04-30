@@ -14,9 +14,10 @@ public:
     ~ControlPanel();
     void draw() override;
 private:
+    const std::string m_kdefaultProgramText = "Select a program to load";
     //sizes
     std::string m_id;
     Window* m_parent;
     Controller& m_controller;
-    std::string m_programFileName = "Select a program to load";
+    std::filesystem::path m_programFilePath;
 };

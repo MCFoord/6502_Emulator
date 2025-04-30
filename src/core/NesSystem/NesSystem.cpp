@@ -6,7 +6,7 @@
 NESSystem::NESSystem()
 {
     m_bus = std::make_shared<Bus>();
-    m_CPU = std::make_shared<CPU6502>();
+    m_CPU = std::make_unique<CPU6502>();
     m_CPU->connectBus(m_bus);
 }
 
@@ -38,4 +38,10 @@ bool NESSystem::LoadCartridge(std::filesystem::path path)
         m_bus->connectCartridge(m_cartridge);
 
     return m_cartridge->successfulLoad();
+}
+
+void NESSystem::UnloadCartridge()
+{
+    m_bus->disconnectCartridge();
+    m_cartridge = nullptr;
 }
