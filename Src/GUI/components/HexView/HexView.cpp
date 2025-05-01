@@ -169,7 +169,7 @@ void HexView::drawMemory()
 
 void HexView::drawFooter()
 {
-    ImGui::BeginChild("footer", ImVec2(-FLT_MIN, m_sizes.lineheightWithSpacing * 2));
+    ImGui::BeginChild("footer", ImVec2(-FLT_MIN, m_sizes.lineheightWithSpacing * 3));
 
     if (ImGui::IsMouseClicked(0) && clickInsideMemorywindow())
     {
@@ -188,9 +188,41 @@ void HexView::drawFooter()
         m_controller.removeBreakpoint(m_selectedAddress);
     }
 
+    // ImGui::SameLine();
+    
+    if (ImGui::Button("Full CPU Address Space"))
+    {
+
+    }
+
     ImGui::SameLine();
 
-    
+    if (ImGui::Button("PRG ROM"))
+    {
+
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("PRG RAM"))
+    {
+
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("CHR RAM"))
+    {
+
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("CPU RAM"))
+    {
+
+    }
+
 
     ImGui::EndChild();
 }

@@ -9,7 +9,10 @@
 Cartridge::Cartridge(std::filesystem::path path)
 {
 	if (path.extension() != ".nes")
+	{
+		printf("File is not a .nes file\n");
 		return;
+	}
 
 	int fd = open(path.c_str(), O_RDONLY);
 
@@ -21,9 +24,9 @@ Cartridge::Cartridge(std::filesystem::path path)
 		return;	
 	}
 
-	if (fileHeader.constant != 0x4E45531A) //'NES' && 0x1A
+	if (fileHeader.constant != 0x1A53454E) //'NES' && 0x1A
 	{
-		printf("File is not INES format.\n");
+		printf("File is not INES format. - constant read was: %X\n", fileHeader.constant);
 		return;
 	}
 

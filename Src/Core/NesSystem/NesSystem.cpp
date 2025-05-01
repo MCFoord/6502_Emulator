@@ -2,6 +2,7 @@
 #include "CPU6502.h"
 #include "Cartridge.h"
 #include <memory>
+#include <iostream>
 
 NESSystem::NESSystem()
 {
@@ -32,11 +33,14 @@ void NESSystem::powerOn()
 
 bool NESSystem::LoadCartridge(std::filesystem::path path)
 {
+    std::cout << "creating new cartridge from file\n";
+
     m_cartridge = std::make_shared<Cartridge>(path);
 
     if (m_cartridge->successfulLoad())
         m_bus->connectCartridge(m_cartridge);
 
+    std::cout << "loaded successfully? " << m_cartridge->successfulLoad() << "\n";
     return m_cartridge->successfulLoad();
 }
 
