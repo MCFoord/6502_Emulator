@@ -30,7 +30,11 @@ private:
 
 //UI memview methods
 public:
-	uint8_t PRGROMRead(uint16_t addr);
-	uint8_t PRGRAMRead(uint16_t addr);
-	uint8_t CHRRAMRead(uint16_t addr);
+	uint64_t PRGROMSize() { return m_PRGROM.size(); }
+	uint64_t PRGRAMSize() { return m_PRGRAM.size(); }
+	uint64_t CHRRAMSize() { return m_CHRRAM.size(); }
+	
+	uint8_t PRGROMRead(uint16_t addr) { return m_PRGROM[addr]; };
+	uint8_t PRGRAMRead(uint16_t addr) { return m_PRGRAM[addr]; };
+	uint8_t CHRRAMRead(uint16_t addr) { return m_CHRRAM[addr]; };
 };

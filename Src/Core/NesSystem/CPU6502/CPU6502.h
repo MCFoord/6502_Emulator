@@ -13,6 +13,24 @@ public:
     CPU6502();
     ~CPU6502();
 
+    void connectBus(std::shared_ptr<Bus> bus) { m_bus = bus; }
+    void reset();
+    void tick();
+    void execute();
+    void run(int numOperations);
+    void run(bool& shouldStop);
+    void run(bool& shouldStop, const std::vector<int> breakpoints);
+    void run();
+    
+    //debug methods
+    std::string registerToString();
+    std::string instructionInfoToString();
+    std::string statusToString();
+    void printOperation(uint16_t address, std::ostream& output);
+    void run(std::ostream& output, int numOperations);
+    void execute(std::ostream& output);
+
+private:
     //registers
     uint8_t a = 0x00;
     uint8_t x = 0x00;
@@ -36,8 +54,6 @@ public:
     instruction currentInstruction;
     uint8_t cycles = 0;
 
-    
-
     enum CPUFLAGS
     {
         C = (1 << 0),
@@ -50,36 +66,15 @@ public:
         N = (1 << 7)
     };
 
-    void connectBus(std::shared_ptr<Bus> bus) { m_bus = bus; }
-
     bool getFlag(CPUFLAGS flag);
     void setFlag(CPUFLAGS flag, bool set);
-
     void fetch();
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t value);
-
     void push(uint8_t value);
     uint8_t pop();
 
-    void reset();
-    void tick();
-    void execute();
-    void run(int numOperations);
-    void run(bool& shouldStop);
-    void run(bool& shouldStop, const std::vector<int> breakpoints);
-    void run();
-    
 
-    //debug methods
-    std::string registerToString();
-    std::string instructionInfoToString();
-    std::string statusToString();
-    void printOperation(uint16_t address, std::ostream& output);
-    void run(std::ostream& output, int numOperations);
-    void execute(std::ostream& output);
-
-private:
     std::shared_ptr<Bus> m_bus = nullptr;
 
     //addressing modes

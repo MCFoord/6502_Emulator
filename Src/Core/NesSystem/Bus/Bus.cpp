@@ -25,9 +25,12 @@ uint8_t Bus::CPURead(uint16_t addr)
         return 0; // PPU stuff - nothing for now
     else if (addr <= 0x401F)
         return 0; // APU stuff - nothing for now
+    else if (addr <= 0x5FFF)
+        return 0; //unmapped
     else if (addr <= 0xFFFF)
-        return m_cartridge->CPURead(addr);
+        return m_cartridge ? m_cartridge->CPURead(addr) : 0;
 
+    return 0; //fallback, but should never get here
 }
 
 void Bus::CPUWrite(uint16_t addr, uint8_t value)
@@ -38,14 +41,17 @@ void Bus::CPUWrite(uint16_t addr, uint8_t value)
         return; // PPU stuff - nothing for now
     else if (addr <= 0x401F)
         return; // APU stuff - nothing for now
+    else if (addr <= 0x5FFF)
+        return; //unmapped
     else if (addr <= 0xFFFF)
+        if (! m_cartridge)
+            return;
         m_cartridge->CPUWrite(addr, value);
-
 }
 
 uint8_t Bus::PPURead(uint16_t addr)
 {
-    
+
 }
 
 void Bus::PPUWrite(uint16_t addr, uint8_t value)

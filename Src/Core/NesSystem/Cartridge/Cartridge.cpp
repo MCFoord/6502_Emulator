@@ -33,6 +33,7 @@ Cartridge::Cartridge(std::filesystem::path path)
 	uint64_t PRGROMSizeBits = 16 * 1024 * fileHeader.PRGSize;
 	uint64_t CHRROMSizeBits = 8 * 1024 * fileHeader.CHRSize;
 
+	m_PRGRAM.resize(8 * 1024);
 	m_PRGROM.resize(PRGROMSizeBits);
 	if (fileHeader.CHRSize != 0)
 		m_CHRRAM.resize(CHRROMSizeBits);
@@ -71,6 +72,9 @@ void Cartridge::PPUWrite(uint16_t addr, uint8_t data)
 //for mappers with ram this needs to be fixed
 uint8_t Cartridge::CPURead(uint16_t addr)
 {
+	if (addr <= 0x7FFF)
+		return m_PRGRAM[addr - 0x6000];
+
 	uint16_t mappedAddress = m_mapper->mapCPURead(addr);
 
 	return m_PRGROM[mappedAddress];
@@ -78,7 +82,6 @@ uint8_t Cartridge::CPURead(uint16_t addr)
 
 void Cartridge::CPUWrite(uint16_t addr, uint8_t data)
 {
-	uint16_t mappedAddress = m_mapper->mapCPUWrite(addr);
-
-	m_PRGRAM[mappedAddress] = data;
+	if (addr <= 0x7FFF)
+		m_PRGRAM[addr - 0x6000] = data;
 }
