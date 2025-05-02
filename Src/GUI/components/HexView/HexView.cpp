@@ -1,4 +1,5 @@
 #include "HexView.h"
+#include "Controller.h"
 #include "imgui.h"
 
 // make a bunch of these configurable
@@ -12,7 +13,9 @@
 HexView::HexView(std::string id, Window* parent, Controller& controller):
 m_id(id),
 m_parent(parent),
-m_controller(controller)
+m_controller(controller),
+m_getMemSizeFunction(&Controller::CPURAMSize),
+m_readMemFunction(&Controller::CPURAMRead)
 {
     
 }
@@ -123,7 +126,9 @@ void HexView::drawMemory()
     );
 
     ImGuiListClipper clipper;
-    clipper.Begin(MEM_SIZE / HEX_COLUMNS, m_sizes.lineHeight);
+    const uint64_t memorySize = (m_controller.*m_getMemSizeFunction)();
+
+    clipper.Begin(memorySize / HEX_COLUMNS, m_sizes.lineHeight);
 
     while (clipper.Step())
     {
@@ -141,7 +146,7 @@ void HexView::drawMemory()
             ImGui::Text("%04X: ", addr);
             ImGui::SameLine(0,0);
 
-            for (int col = 0; col < HEX_COLUMNS && addr < MEM_SIZE; col++, addr++)
+            for (int col = 0; col < HEX_COLUMNS && addr < memorySize; col++, addr++)
             {   
                 if (m_controller.isBreakpoint(addr))
                 {
@@ -152,7 +157,7 @@ void HexView::drawMemory()
                     colourCell(SELECTED_HIGHLIGHT_COLOUR, drawList);
                 }
 
-                drawHexcell(m_controller.readBus(addr));
+                drawHexcell((m_controller.*m_readMemFunction)(addr));
 
                 if (col == HEX_COL_MIDPOINT)
                 {
@@ -192,35 +197,40 @@ void HexView::drawFooter()
     
     if (ImGui::Button("Full CPU Address Space"))
     {
-
+        m_getMemSizeFunction = &Controller::CPUFullAddressSpaceSize;
+        m_readMemFunction = &Controller::CPURead;
     }
 
     ImGui::SameLine();
 
     if (ImGui::Button("PRG ROM"))
     {
-
+        m_getMemSizeFunction = &Controller::cartridgePRGROMSize;
+        m_readMemFunction = &Controller::cartridgePRGROMRead;
     }
 
     ImGui::SameLine();
 
     if (ImGui::Button("PRG RAM"))
     {
-
+        m_getMemSizeFunction = &Controller::cartridgePRGRAMSize;
+        m_readMemFunction = &Controller::cartridgePRGRAMRead;
     }
 
     ImGui::SameLine();
 
     if (ImGui::Button("CHR RAM"))
     {
-
+        m_getMemSizeFunction = &Controller::cartridgeCHRRAMSize;
+        m_readMemFunction = &Controller::cartridgeCHRRAMRead;
     }
 
     ImGui::SameLine();
 
     if (ImGui::Button("CPU RAM"))
     {
-
+        m_getMemSizeFunction = &Controller::CPURAMSize;
+        m_readMemFunction = &Controller::CPURAMRead;
     }
 
 

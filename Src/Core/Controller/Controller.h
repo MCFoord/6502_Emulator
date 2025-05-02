@@ -26,6 +26,18 @@ public:
     uint8_t readBus(uint16_t addr);
     //need a graceful way to quit
 
+    uint64_t CPUFullAddressSpaceSize() { return m_nes->CPUFullAddressSpaceSize(); }
+    uint64_t CPURAMSize() { return m_nes->CPURAMSize(); }
+    uint64_t cartridgePRGROMSize() { return m_nes->cartridgePRGROMSize(); }
+    uint64_t cartridgePRGRAMSize() { return m_nes->cartridgePRGRAMSize(); }
+    uint64_t cartridgeCHRRAMSize() { return m_nes->cartridgeCHRRAMSize(); }
+
+    uint8_t CPURead(uint16_t addr) { return m_nes-> CPURead(addr); }
+    uint8_t CPURAMRead(uint16_t addr) { return m_nes->CPURAMRead(addr); }
+    uint8_t cartridgePRGROMRead(uint16_t addr) { return m_nes->cartridgePRGROMRead(addr); }
+    uint8_t cartridgePRGRAMRead(uint16_t addr) { return m_nes->cartridgePRGRAMRead(addr); }
+    uint8_t cartridgeCHRRAMRead(uint16_t addr) { return m_nes->cartridgeCHRRAMRead(addr); }
+
 private:
     std::thread m_cpuControlThread;
     std::shared_ptr<NESSystem> m_nes;

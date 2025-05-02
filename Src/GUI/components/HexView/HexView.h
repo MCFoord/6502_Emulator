@@ -14,6 +14,8 @@ public:
     void draw() override;
     int m_breakPoint = -1;
 private:
+    uint64_t (Controller::*m_getMemSizeFunction)();
+    uint8_t (Controller::*m_readMemFunction)(uint16_t addr);
     std::string m_id;
     Window* m_parent;
     Controller& m_controller;
