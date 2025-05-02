@@ -1,8 +1,4 @@
 #include <memory>
-#include <sstream>
-#include <iomanip>
-#include <iostream>
-#include <algorithm>
 #include "CPU6502.h"
 #include "Bus.h"
 
@@ -290,50 +286,6 @@ CPU6502::~CPU6502()
     
 }
 
-std::string CPU6502::registerToString()
-{
-    std::stringstream ss;
-    ss << "A: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(a) << ", "
-       << "X: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(x) << ", "
-       << "Y: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(y) << ", "
-       << "SP: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(sp) << ", "
-       << "PC: " << std::setfill('0') << std::setw(4) << std::hex << static_cast<int>(pc);
-      
-    return ss.str();
-}
-
-std::string CPU6502::instructionInfoToString()
-{
-    std::stringstream ss;
-
-    ss << "PC value: (" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(read(pc)) << ") "
-       << ", Next Instruction: " << currentInstruction.instructionName << ", Adressing Mode: " << currentInstruction.addressingModeName << "\n"
-       << "Previous operation: {address: " << std::setfill('0') << std::setw(4) << std::hex << static_cast<int>(currentAddress)
-       << ", Value: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(currentValue) << "}\n";
-
-    return ss.str();
-}
-
-std::string CPU6502::statusToString()
-{
-    std::stringstream ss;
-    ss << "C: " << getFlag(CPU6502::C) << ", "
-       << "Z: " << getFlag(CPU6502::Z) << ", "
-       << "I: " << getFlag(CPU6502::I) << ", "
-       << "D: " << getFlag(CPU6502::D) << ", "
-       << "B: " << getFlag(CPU6502::B) << ", "
-       << "U: " << getFlag(CPU6502::U) << ", "
-       << "V: " << getFlag(CPU6502::V) << ", "
-       << "N: " << getFlag(CPU6502::N);
-
-    return ss.str();
-}
-
-void CPU6502::peekInstruction()
-{
-    currentInstruction = instructions[read(pc)];
-}
-
 uint8_t CPU6502::read(uint16_t addr)
 {
     return m_bus->read(addr);
@@ -375,12 +327,11 @@ void CPU6502::setFlag(CPUFLAGS flag, bool set)
 
 void CPU6502::tick()
 {
-    cycles--;
-    if (cycles <= 0 )
-    {
-        execute();
-        peekInstruction();
-    }
+/*
+    FETCH
+    ADDRESS
+    STUFF
+*/
 }
 
 void CPU6502::reset()
@@ -395,102 +346,6 @@ void CPU6502::reset()
     currentAddress = 0x000;
     currentValue = 0x00;
     currentInstruction = {};
-}
-
-void CPU6502::execute()
-{
-    currentInstruction = instructions[read(pc++)];
-    
-    (this->*currentInstruction.addressingMode)();
-    (this->*currentInstruction.operation)();
-    
-    return;
-}
-
-void CPU6502::run(int numOperations)
-{
-    while (currentInstruction.instructionName != "ILL" && numOperations > 0)
-    {
-        execute();
-        --numOperations;
-    }
-}
-
-void CPU6502::run(bool& shouldStop)
-{
-    uint16_t currentPC = 0x00;
-    int pcRepeatCount = 0;
-
-    while (currentInstruction.instructionName != "ILL" && !shouldStop)
-    {
-        execute();
-        if (pc == currentPC)
-        {
-            pcRepeatCount++;
-        }
-        else if (pc == 0x3469 || pc == 0x346c)
-        {
-            std::cout << "SUCCESS" << '\n';
-            shouldStop = true;
-        }
-        else
-        {
-            currentPC = pc;
-        }
-    }
-}
-
-void CPU6502::run(bool& shouldStop, std::vector<int> breakpoints)
-{
-    while (currentInstruction.instructionName != "ILL" && !shouldStop)
-    {
-        execute();
-
-        if (std::binary_search(breakpoints.begin(), breakpoints.end(), pc))
-        {
-            std::cout << "BREAKPOINT" << '\n';
-            shouldStop = true;
-        }
-    }
-}
-
-void CPU6502::run()
-{
-    while (currentInstruction.instructionName != "ILL")
-    {
-        execute();
-    }
-}
-
-void CPU6502::run(std::ostream& output, int numOperations)
-{
-    while (currentInstruction.instructionName != "ILL" && numOperations > 0)
-    {
-        execute(output);
-        --numOperations;
-    }
-}
-
-void CPU6502::execute(std::ostream& output)
-{
-    currentInstruction = instructions[read(pc++)];
-    uint16_t instructionAddress = pc;
-    
-    (this->*currentInstruction.addressingMode)();
-    (this->*currentInstruction.operation)();
-
-    printOperation(instructionAddress, output);
-    return;
-}
-
-void CPU6502::printOperation(uint16_t address,  std::ostream& output)
-{
-    output << "[ " << std::setfill('0') << std::setw(4) << std::hex << static_cast<int>(address)
-           << ": " << currentInstruction.instructionName << " " << std::setfill(' ') 
-           << std::setw(11) << std::left << currentInstruction.addressingModeName << " ] "
-           << registerToString() << " " << statusToString()
-           << " ca: " << std::hex << static_cast<int>(currentAddress)
-           << " cv: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(read(currentAddress)) << "\n";
 }
 
 // addressing

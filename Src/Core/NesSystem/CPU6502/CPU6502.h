@@ -16,19 +16,6 @@ public:
     void connectBus(std::shared_ptr<Bus> bus) { m_bus = bus; }
     void reset();
     void tick();
-    void execute();
-    void run(int numOperations);
-    void run(bool& shouldStop);
-    void run(bool& shouldStop, const std::vector<int> breakpoints);
-    void run();
-    
-    //debug methods
-    std::string registerToString();
-    std::string instructionInfoToString();
-    std::string statusToString();
-    void printOperation(uint16_t address, std::ostream& output);
-    void run(std::ostream& output, int numOperations);
-    void execute(std::ostream& output);
 
 private:
     //registers
@@ -46,13 +33,15 @@ private:
         std::string addressingModeName;
         void (CPU6502::*addressingMode)();
         void (CPU6502::*operation)();
-        uint8_t cycles;
+        uint64_t cycles;
     };
 
     uint16_t currentAddress = 0x000;
     uint8_t currentValue = 0x00;
     instruction currentInstruction;
-    uint8_t cycles = 0;
+
+  
+    uint64_t cycles = 0;  // kill me later
 
     enum CPUFLAGS
     {
@@ -68,12 +57,10 @@ private:
 
     bool getFlag(CPUFLAGS flag);
     void setFlag(CPUFLAGS flag, bool set);
-    void peekInstruction();
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t value);
     void push(uint8_t value);
     uint8_t pop();
-
 
     std::shared_ptr<Bus> m_bus = nullptr;
 

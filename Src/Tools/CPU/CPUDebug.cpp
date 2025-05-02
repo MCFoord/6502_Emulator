@@ -35,6 +35,45 @@ std::string memToString(uint16_t start, uint16_t end)
     return ss.str();
 }
 
+std::string CPU6502::registerToString()
+{
+    std::stringstream ss;
+    ss << "A: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(a) << ", "
+       << "X: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(x) << ", "
+       << "Y: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(y) << ", "
+       << "SP: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(sp) << ", "
+       << "PC: " << std::setfill('0') << std::setw(4) << std::hex << static_cast<int>(pc);
+      
+    return ss.str();
+}
+
+std::string CPU6502::instructionInfoToString()
+{
+    std::stringstream ss;
+
+    ss << "PC value: (" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(read(pc)) << ") "
+       << ", Next Instruction: " << currentInstruction.instructionName << ", Adressing Mode: " << currentInstruction.addressingModeName << "\n"
+       << "Previous operation: {address: " << std::setfill('0') << std::setw(4) << std::hex << static_cast<int>(currentAddress)
+       << ", Value: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(currentValue) << "}\n";
+
+    return ss.str();
+}
+
+std::string CPU6502::statusToString()
+{
+    std::stringstream ss;
+    ss << "C: " << getFlag(CPU6502::C) << ", "
+       << "Z: " << getFlag(CPU6502::Z) << ", "
+       << "I: " << getFlag(CPU6502::I) << ", "
+       << "D: " << getFlag(CPU6502::D) << ", "
+       << "B: " << getFlag(CPU6502::B) << ", "
+       << "U: " << getFlag(CPU6502::U) << ", "
+       << "V: " << getFlag(CPU6502::V) << ", "
+       << "N: " << getFlag(CPU6502::N);
+
+    return ss.str();
+}
+
 int main(int argc, char **argv)
 {
     std::ofstream debugOutput;
