@@ -329,7 +329,7 @@ std::string CPU6502::statusToString()
     return ss.str();
 }
 
-void CPU6502::fetch()
+void CPU6502::peekInstruction()
 {
     currentInstruction = instructions[read(pc)];
 }
@@ -375,7 +375,12 @@ void CPU6502::setFlag(CPUFLAGS flag, bool set)
 
 void CPU6502::tick()
 {
-
+    cycles--;
+    if (cycles <= 0 )
+    {
+        execute();
+        peekInstruction();
+    }
 }
 
 void CPU6502::reset()

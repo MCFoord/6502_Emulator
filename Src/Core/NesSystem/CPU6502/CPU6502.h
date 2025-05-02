@@ -36,7 +36,7 @@ private:
     uint8_t x = 0x00;
     uint8_t y = 0x00;
     uint8_t sp = 0x00;
-    uint16_t pc = 0x000;
+    uint16_t pc = 0x0000;
     uint8_t status = 0x00;
 
     struct instruction
@@ -68,7 +68,7 @@ private:
 
     bool getFlag(CPUFLAGS flag);
     void setFlag(CPUFLAGS flag, bool set);
-    void fetch();
+    void peekInstruction();
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t value);
     void push(uint8_t value);
