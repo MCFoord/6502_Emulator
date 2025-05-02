@@ -14,17 +14,18 @@ public:
     ~CPU6502();
 
     void connectBus(std::shared_ptr<Bus> bus) { m_bus = bus; }
-    void reset();
     void tick();
+    void reset();
+
 
 private:
     //registers
-    uint8_t a = 0x00;
-    uint8_t x = 0x00;
-    uint8_t y = 0x00;
-    uint8_t sp = 0x00;
-    uint16_t pc = 0x0000;
-    uint8_t status = 0x00;
+    uint8_t A = 0x00;
+    uint8_t X = 0x00;
+    uint8_t Y = 0x00;
+    uint8_t SP = 0x00;
+    uint16_t PC = 0x0000;
+    uint8_t STATUS = 0x00;
 
     struct instruction
     {
@@ -36,9 +37,9 @@ private:
         uint64_t cycles;
     };
 
-    uint16_t currentAddress = 0x000;
-    uint8_t currentValue = 0x00;
-    instruction currentInstruction;
+    uint16_t m_currentAddress = 0x000;
+    uint8_t m_currentValue = 0x00;
+    instruction m_currentInstruction;
 
   
     uint64_t cycles = 0;  // kill me later
@@ -55,12 +56,14 @@ private:
         N = (1 << 7)
     };
 
-    bool getFlag(CPUFLAGS flag);
-    void setFlag(CPUFLAGS flag, bool set);
+    instruction peek() { return instructions[read(PC)]; }
+    void fetch();
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t value);
     void push(uint8_t value);
     uint8_t pop();
+    bool getFlag(CPUFLAGS flag);
+    void setFlag(CPUFLAGS flag, bool set);
 
     std::shared_ptr<Bus> m_bus = nullptr;
 

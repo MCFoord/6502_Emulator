@@ -286,6 +286,34 @@ CPU6502::~CPU6502()
     
 }
 
+void CPU6502::tick()
+{
+/*
+    FETCH
+    ADDRESS
+    STUFF
+*/
+}
+
+void CPU6502::reset()
+{
+    PC = 0x0400;
+    A = 0x00;
+    X = 0x00;
+    Y = 0x00;
+    SP = 0xFD;
+    STATUS = 0x30;
+
+    m_currentAddress = 0x000;
+    m_currentValue = 0x00;
+    m_currentInstruction = {};
+}
+
+void CPU6502::fetch()
+{
+    m_currentInstruction = instructions[read(PC++)];
+}
+
 uint8_t CPU6502::read(uint16_t addr)
 {
     return m_bus->read(addr);
@@ -298,54 +326,27 @@ void CPU6502::write(uint16_t addr, uint8_t value)
 
 void CPU6502::push(uint8_t value)
 {
-    write(0x0100 + sp, value);
-    sp--;
+    write(0x0100 + SP, value);
+    SP--;
 }
 
 uint8_t CPU6502::pop()
 {
-    sp++;
-    return read(0x0100 + sp);
+    SP++;
+    return read(0x0100 + SP);
 }
 
 bool CPU6502::getFlag(CPUFLAGS flag)
 {
-    return flag & status;
+    return flag & STATUS;
 }
 
 void CPU6502::setFlag(CPUFLAGS flag, bool set)
 {
     if (set)
-    {
-        status |= flag;
-    }
+        STATUS |= flag;
     else
-    {
-        status &= ~(flag);
-    }
-}
-
-void CPU6502::tick()
-{
-/*
-    FETCH
-    ADDRESS
-    STUFF
-*/
-}
-
-void CPU6502::reset()
-{
-    pc = 0x0400;
-    a = 0x00;
-    x = 0x00;
-    y = 0x00;
-    sp = 0xFD;
-    status = 0x30;
-
-    currentAddress = 0x000;
-    currentValue = 0x00;
-    currentInstruction = {};
+        STATUS &= ~(flag);
 }
 
 // addressing
@@ -356,105 +357,101 @@ void CPU6502::implicit()
 
 void CPU6502::immediate()
 {
-    currentValue = read(pc++);
-    currentAddress = pc;
+    m_currentValue = read(PC++);
+    m_currentAddress = PC;
 }
 
 void CPU6502::accumulator()
 {
-    currentValue = a;
+    m_currentValue = A;
 }
 
 void CPU6502::relative()
 {
-    uint16_t offset = read(pc++);
+    uint16_t offset = read(PC++);
 
     if (offset & 0x80)
-    {
         offset |= 0xFF00;
-    }
 
-    currentValue = offset;
-    currentAddress = pc + offset;
+    m_currentValue = offset;
+    m_currentAddress = PC + offset;
 }
 
 //look up the page boundary bug for JMP opcode
 void CPU6502::indirect()
 {
-    uint16_t pointerLow = read(pc++);
-    uint8_t pointerHigh = read(pc);
+    uint16_t pointerLow = read(PC++);
+    uint8_t pointerHigh = read(PC);
 
-    currentAddress = (pointerHigh << 8) | pointerLow; //lowbyte pointer
+    m_currentAddress = (pointerHigh << 8) | pointerLow; //lowbyte pointer
 
-    uint16_t lowByte = read(currentAddress);
-    uint8_t highByte = read(currentAddress + 1);
+    uint16_t lowByte = read(m_currentAddress);
+    uint8_t highByte = read(m_currentAddress + 1);
 
     if (pointerLow == 0xFF)
-    {
         //unsure if this is actually correct, but i'm tired
-        highByte = read(((currentAddress & 0xFF00) << 8) | pointerLow);
-    }
+        highByte = read(((m_currentAddress & 0xFF00) << 8) | pointerLow);
 
-    currentAddress = (highByte << 8) | lowByte;
-    currentValue = read(currentAddress);
+    m_currentAddress = (highByte << 8) | lowByte;
+    m_currentValue = read(m_currentAddress);
 }
 
 void CPU6502::indirectX()
 {
-    uint16_t lowByte = (read(pc++) + x) & 0x00FF;
+    uint16_t lowByte = (read(PC++) + X) & 0x00FF;
     uint8_t highByte = (lowByte + 1) & 0xFF;
 
-    currentAddress = (read(highByte) << 8) | read(lowByte);
-    currentValue = read(currentAddress);
+    m_currentAddress = (read(highByte) << 8) | read(lowByte);
+    m_currentValue = read(m_currentAddress);
 }
 
 void CPU6502::indirectY()
 {
-    uint16_t lowByte = read(pc++);
+    uint16_t lowByte = read(PC++);
     uint8_t highByte = (lowByte + 1) & 0xFF;
 
-    currentAddress = ((read(highByte) << 8) | read(lowByte)) + y;
+    m_currentAddress = ((read(highByte) << 8) | read(lowByte)) + Y;
     
     //FIX THIS to match the change above
-    if ((currentAddress & 0xFF00) != highByte)
+    if ((m_currentAddress & 0xFF00) != highByte)
     {
         cycles++;
     }
 
-    currentValue = read(currentAddress);
+    m_currentValue = read(m_currentAddress);
 }
 
 void CPU6502::absolute()
 {
-    uint16_t lowByte = read(pc++);
-    currentAddress = (read(pc++) << 8) | lowByte;
+    uint16_t lowByte = read(PC++);
+    m_currentAddress = (read(PC++) << 8) | lowByte;
 
-    currentValue = read(currentAddress);
+    m_currentValue = read(m_currentAddress);
 } 
 
 void CPU6502::absoluteX()
 {
-    uint16_t lowByte = read(pc++);
-    uint8_t highByte = read(pc++);
+    uint16_t lowByte = read(PC++);
+    uint8_t highByte = read(PC++);
 
-	currentAddress = ((highByte << 8) | lowByte) + x;
+	m_currentAddress = ((highByte << 8) | lowByte) + X;
 	
-    currentValue = read(currentAddress);
+    m_currentValue = read(m_currentAddress);
 }
 
 void CPU6502::absoluteY()
 {
-    uint16_t lowByte = read(pc++);
-    uint8_t highByte = read(pc++);
+    uint16_t lowByte = read(PC++);
+    uint8_t highByte = read(PC++);
 
-    currentAddress = ((highByte << 8) | lowByte) + y;
+    m_currentAddress = ((highByte << 8) | lowByte) + Y;
 
-    if ((currentAddress & 0xFF00) != highByte)
+    if ((m_currentAddress & 0xFF00) != highByte)
     {
         cycles++;
     }
 
-    currentValue = read(currentAddress);
+    m_currentValue = read(m_currentAddress);
 }
 
 /* check this later for any bugs to do with not actually
@@ -462,20 +459,20 @@ void CPU6502::absoluteY()
 */
 void CPU6502::zeroPage()
 {
-    currentAddress = read(pc++) & 0xFF;
-    currentValue = read(currentAddress);
+    m_currentAddress = read(PC++) & 0xFF;
+    m_currentValue = read(m_currentAddress);
 }   
 
 void CPU6502::zeroPageX()
 {
-    currentAddress = (read(pc++) + x) & 0xFF;
-    currentValue = read(currentAddress);
+    m_currentAddress = (read(PC++) + X) & 0xFF;
+    m_currentValue = read(m_currentAddress);
 }
 
 void CPU6502::zeroPageY()
 {
-    currentAddress = (read(pc++) + y) & 0xFF;
-    currentValue = read(currentAddress);
+    m_currentAddress = (read(PC++) + Y) & 0xFF;
+    m_currentValue = read(m_currentAddress);
 }
 
 //interrupts
@@ -484,14 +481,14 @@ void CPU6502::NMI()
     setFlag(CPU6502::B, false);
     setFlag(CPU6502::U, false);
 
-    pc++;
-    push((pc >> 8) & 0xFF);
-    push(pc & 0xFF);
-    push(status);
+    PC++;
+    push((PC >> 8) & 0xFF);
+    push(PC & 0xFF);
+    push(STATUS);
 
     setFlag(CPU6502::I, true);
 
-    pc = (read(0xFFFB) << 8) | read(0xFFFA);
+    PC = (read(0xFFFB) << 8) | read(0xFFFA);
 }
 
 void CPU6502::IRQ()
@@ -502,44 +499,44 @@ void CPU6502::IRQ()
     setFlag(CPU6502::B, false);
     setFlag(CPU6502::U, false);
 
-    pc++;
-    push((pc >> 8) & 0xFF);
-    push(pc & 0xFF);
-    push(status);
+    PC++;
+    push((PC >> 8) & 0xFF);
+    push(PC & 0xFF);
+    push(STATUS);
 
     setFlag(CPU6502::I, true);
 
-    pc = (read(0xFFFF) << 8) | read(0xFFFE);
+    PC = (read(0xFFFF) << 8) | read(0xFFFE);
 }
 
 // inctructions
 void CPU6502::ADC()
 {
-    uint16_t result = a + currentValue + getFlag(CPUFLAGS::C);
+    uint16_t result = A + m_currentValue + getFlag(CPUFLAGS::C);
 
     if (getFlag(CPUFLAGS::D))
     {
-        result = (a & 0x0F) + (currentValue & 0x0F) + getFlag(CPUFLAGS::C);
+        result = (A & 0x0F) + (m_currentValue & 0x0F) + getFlag(CPUFLAGS::C);
         if (result > 9) result += 0x06;
 
-        result = (a & 0xF0) + (currentValue & 0xF0) + (result > 0x0F ? 0x10 : 0) + (result & 0x0F);
+        result = (A & 0xF0) + (m_currentValue & 0xF0) + (result > 0x0F ? 0x10 : 0) + (result & 0x0F);
         if (result > 0x9F) result += 0x60;
     }
 
     setFlag(CPUFLAGS::Z, (result & 0xFF) == 0x00);
     setFlag(CPUFLAGS::C, (result > 0xFF));
-    setFlag(CPUFLAGS::V, (a ^ result) & (currentValue ^ result) & 0x80);
+    setFlag(CPUFLAGS::V, (A ^ result) & (m_currentValue ^ result) & 0x80);
     setFlag(CPUFLAGS::N, result & 0x80);
 
-    a = result & 0xFF;
+    A = result & 0xFF;
 }
 
 void CPU6502::AND()
 {
-    a &= currentValue;
+    A &= m_currentValue;
 
-    setFlag(CPUFLAGS::Z, a == 0x00);
-    setFlag(CPUFLAGS::N, a & 0x80);
+    setFlag(CPUFLAGS::Z, A == 0x00);
+    setFlag(CPUFLAGS::N, A & 0x80);
 
 }
 
@@ -547,23 +544,23 @@ void CPU6502::ASL()
 {
     /*
     need to worry about where the result is being writen to,
-    need to differentiate between if it's the accumulator or a memory address
+    need to differentiate between if it's the accumulator or A memory address
     */
     
-    uint8_t result = (currentValue << 1);
+    uint8_t result = (m_currentValue << 1);
 
     setFlag(CPUFLAGS::Z, result == 0x00);
-    setFlag(CPUFLAGS::C, currentValue & 0x80);
+    setFlag(CPUFLAGS::C, m_currentValue & 0x80);
     setFlag(CPUFLAGS::N, result & 0x80);
 
 
-    if (currentInstruction.addressingMode == &CPU6502::accumulator)
+    if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
     {
-        a = result;
+        A = result;
     }
     else
     {
-        write(currentAddress, result);
+        write(m_currentAddress, result);
     }
 }
 
@@ -573,12 +570,12 @@ void CPU6502::BCC()
     {
         cycles++;
 
-        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
         {
             cycles++;
         }
 
-        pc = currentAddress;
+        PC = m_currentAddress;
     }
 }
 
@@ -587,14 +584,14 @@ void CPU6502::BCS()
     if (getFlag(CPUFLAGS::C))
     {
         cycles++;
-        uint16_t rel = pc + currentValue;
+        uint16_t rel = PC + m_currentValue;
 
-        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
         {
             cycles++;
         }
 
-        pc = currentAddress;
+        PC = m_currentAddress;
     }
 }
 
@@ -603,24 +600,24 @@ void CPU6502::BEQ()
     if (getFlag(CPUFLAGS::Z))
     {
         cycles++;
-        uint16_t rel = pc + currentValue;
+        uint16_t rel = PC + m_currentValue;
 
-        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
         {
             cycles++;
         }
 
-        pc = currentAddress;
+        PC = m_currentAddress;
     }
 }
 
 void CPU6502::BIT()
 {
-    uint8_t result = a & currentValue;
+    uint8_t result = A & m_currentValue;
 
     setFlag(CPUFLAGS::Z, !result);
-    setFlag(CPUFLAGS::V, currentValue & 0x40);
-    setFlag(CPUFLAGS::N, currentValue & 0x80);
+    setFlag(CPUFLAGS::V, m_currentValue & 0x40);
+    setFlag(CPUFLAGS::N, m_currentValue & 0x80);
 }
 
 void CPU6502::BMI()
@@ -628,14 +625,14 @@ void CPU6502::BMI()
     if (getFlag(CPUFLAGS::N))
     {
         cycles++;
-        uint16_t rel = pc + currentValue;
+        uint16_t rel = PC + m_currentValue;
 
-        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
         {
             cycles++;
         }
 
-        pc = currentAddress;
+        PC = m_currentAddress;
     }
 }
 
@@ -645,12 +642,12 @@ void CPU6502::BNE()
     {
         cycles++;
 
-        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
         {
             cycles++;
         }
 
-        pc = currentAddress;
+        PC = m_currentAddress;
     }
 }
 
@@ -659,14 +656,14 @@ void CPU6502::BPL()
     if (!getFlag(CPUFLAGS::N))
     {
         cycles++;
-        uint16_t rel = pc + currentValue;
+        uint16_t rel = PC + m_currentValue;
 
-        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
         {
             cycles++;
         }
 
-        pc = currentAddress;
+        PC = m_currentAddress;
     }
 }
 
@@ -675,14 +672,14 @@ void CPU6502::BRK()
     setFlag(CPU6502::B, true);
     setFlag(CPU6502::U, true);
 
-    pc++;
-    push((pc >> 8) & 0xFF);
-    push(pc & 0xFF);
-    push(status);
+    PC++;
+    push((PC >> 8) & 0xFF);
+    push(PC & 0xFF);
+    push(STATUS);
 
     setFlag(CPU6502::I, true);
 
-    pc = (read(0xFFFF) << 8) | read(0xFFFE);
+    PC = (read(0xFFFF) << 8) | read(0xFFFE);
 }
 
 void CPU6502::BVC()
@@ -690,14 +687,14 @@ void CPU6502::BVC()
     if (!getFlag(CPUFLAGS::V))
     {
         cycles++;
-        uint16_t rel = pc + currentValue;
+        uint16_t rel = PC + m_currentValue;
 
-        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
         {
             cycles++;
         }
 
-        pc = currentAddress;
+        PC = m_currentAddress;
     }
 }
 
@@ -706,14 +703,14 @@ void CPU6502::BVS()
     if (getFlag(CPUFLAGS::V))
     {
         cycles++;
-        uint16_t rel = pc + currentValue;
+        uint16_t rel = PC + m_currentValue;
 
-        if ((currentAddress & 0xFF00) != (pc & 0xFF00))
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
         {
             cycles++;
         }
 
-        pc = currentAddress;
+        PC = m_currentAddress;
     }
 }
 
@@ -739,141 +736,141 @@ void CPU6502::CLV()
 
 void CPU6502::CMP()
 {
-    uint8_t result = a - currentValue;
+    uint8_t result = A - m_currentValue;
 
-    setFlag(CPU6502::C, (a >= currentValue));
-    setFlag(CPU6502::Z, (a == currentValue));
+    setFlag(CPU6502::C, (A >= m_currentValue));
+    setFlag(CPU6502::Z, (A == m_currentValue));
     setFlag(CPU6502::N, (result & 0x80));
 }
 
 void CPU6502::CPX()
 {
-    uint8_t result = x - currentValue;
+    uint8_t result = X - m_currentValue;
 
-    setFlag(CPU6502::C, (x >= currentValue));
-    setFlag(CPU6502::Z, (x == currentValue));
+    setFlag(CPU6502::C, (X >= m_currentValue));
+    setFlag(CPU6502::Z, (X == m_currentValue));
     setFlag(CPU6502::N, (result & 0x80));
 }
 
 void CPU6502::CPY()
 {
-    uint8_t result = y - currentValue;
+    uint8_t result = Y - m_currentValue;
 
-    setFlag(CPU6502::C, (y >= currentValue));
-    setFlag(CPU6502::Z, (y == currentValue));
+    setFlag(CPU6502::C, (Y >= m_currentValue));
+    setFlag(CPU6502::Z, (Y == m_currentValue));
     setFlag(CPU6502::N, (result & 0x80));
 }
 
 void CPU6502::DEC()
 {
-    uint8_t result = currentValue - 1;
+    uint8_t result = m_currentValue - 1;
 
-    write(currentAddress, result);
+    write(m_currentAddress, result);
     setFlag(CPU6502::Z, (result == 0x00));
     setFlag(CPU6502::N, (result & 0x80));
 }
 
 void CPU6502::DEX()
 {
-    x--;
+    X--;
 
-    setFlag(CPU6502::Z, (x == 0x00));
-    setFlag(CPU6502::N, (x & 0x80));
+    setFlag(CPU6502::Z, (X == 0x00));
+    setFlag(CPU6502::N, (X & 0x80));
 }
 
 void CPU6502::DEY()
 {
-    y--;
+    Y--;
 
-    setFlag(CPU6502::Z, (y == 0x00));
-    setFlag(CPU6502::N, (y & 0x80));
+    setFlag(CPU6502::Z, (Y == 0x00));
+    setFlag(CPU6502::N, (Y & 0x80));
 }
 
 void CPU6502::EOR()
 {
-    a ^= currentValue;
+    A ^= m_currentValue;
 
-    setFlag(CPU6502::Z, (a == 0x00));
-    setFlag(CPU6502::N, (a & 0x80));
+    setFlag(CPU6502::Z, (A == 0x00));
+    setFlag(CPU6502::N, (A & 0x80));
 }
 
 void CPU6502::INC()
 {
-    uint8_t result = currentValue + 1;
+    uint8_t result = m_currentValue + 1;
 
-    write(currentAddress, result);
+    write(m_currentAddress, result);
     setFlag(CPU6502::Z, (result == 0x00));
     setFlag(CPU6502::N, (result & 0x80));
 }
 
 void CPU6502::INX()
 {
-    x++;
+    X++;
 
-    setFlag(CPU6502::Z, (x == 0x00));
-    setFlag(CPU6502::N, (x & 0x80));
+    setFlag(CPU6502::Z, (X == 0x00));
+    setFlag(CPU6502::N, (X & 0x80));
 }
 
 void CPU6502::INY()
 {
-    y++;
+    Y++;
 
-    setFlag(CPU6502::Z, (y == 0x00));
-    setFlag(CPU6502::N, (y & 0x80));
+    setFlag(CPU6502::Z, (Y == 0x00));
+    setFlag(CPU6502::N, (Y & 0x80));
 }
 
 //go to indirect page boundary bug
 void CPU6502::JMP()
 {
-    pc = currentAddress;
+    PC = m_currentAddress;
 }
 
 void CPU6502::JSR()
 {
-    pc--;
-    push((pc >> 8) & 0xFF);
-    push(pc & 0xFF);
-    pc = currentAddress;
+    PC--;
+    push((PC >> 8) & 0xFF);
+    push(PC & 0xFF);
+    PC = m_currentAddress;
 }
 
 void CPU6502::LDA()
 {
-    a = currentValue;
-    setFlag(CPU6502::Z, (a == 0x00));
-    setFlag(CPU6502::N, (a & 0x80));
+    A = m_currentValue;
+    setFlag(CPU6502::Z, (A == 0x00));
+    setFlag(CPU6502::N, (A & 0x80));
 }
 
 void CPU6502::LDX()
 {
-    x = currentValue;
-    setFlag(CPU6502::Z, (x == 0x00));
-    setFlag(CPU6502::N, (x & 0x80));
+    X = m_currentValue;
+    setFlag(CPU6502::Z, (X == 0x00));
+    setFlag(CPU6502::N, (X & 0x80));
 }
 
 void CPU6502::LDY()
 {
-    y = currentValue;
-    setFlag(CPU6502::Z, (y == 0x00));
-    setFlag(CPU6502::N, (y & 0x80));
+    Y = m_currentValue;
+    setFlag(CPU6502::Z, (Y == 0x00));
+    setFlag(CPU6502::N, (Y & 0x80));
 }
 
 void CPU6502::LSR()
 {
-    if (currentInstruction.addressingMode == &CPU6502::accumulator)
+    if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
     {
-        setFlag(CPU6502::C, (a & 0x01));
-        a = (a >> 1);
-        setFlag(CPU6502::Z, (a == 0x00));
-        setFlag(CPU6502::N, (a & 0x80));
+        setFlag(CPU6502::C, (A & 0x01));
+        A = (A >> 1);
+        setFlag(CPU6502::Z, (A == 0x00));
+        setFlag(CPU6502::N, (A & 0x80));
     }
     else
     {
-        uint8_t result = (currentValue >> 1);
+        uint8_t result = (m_currentValue >> 1);
 
-        setFlag(CPU6502::C, (currentValue & 0x01));
+        setFlag(CPU6502::C, (m_currentValue & 0x01));
         setFlag(CPU6502::Z, (result == 0x00));
         setFlag(CPU6502::N, (result & 0x80));
-        write(currentAddress, result);
+        write(m_currentAddress, result);
     }
 }
 
@@ -884,89 +881,89 @@ void CPU6502::NOP()
 
 void CPU6502::ORA()
 {
-    a |= currentValue;
+    A |= m_currentValue;
 
-    setFlag(CPU6502::Z, (a == 0x00));
-    setFlag(CPU6502::N, (a & 0x80));
+    setFlag(CPU6502::Z, (A == 0x00));
+    setFlag(CPU6502::N, (A & 0x80));
 }
 
 void CPU6502::PHA()
 {
-    push(a);
+    push(A);
 }
 
 void CPU6502::PHP()
 {
     setFlag(CPU6502::B, true);
     setFlag(CPU6502::U, true);
-    push(status);
+    push(STATUS);
 }
 
 void CPU6502::PLA()
 {
-    a = pop();
-    setFlag(CPU6502::Z, (a == 0x00));
-    setFlag(CPU6502::N, (a & 0x80));
+    A = pop();
+    setFlag(CPU6502::Z, (A == 0x00));
+    setFlag(CPU6502::N, (A & 0x80));
 }
 
 void CPU6502::PLP()
 {
-    status = pop();
+    STATUS = pop();
 }
 
 void CPU6502::ROL()
 {
     
-    if (currentInstruction.addressingMode == &CPU6502::accumulator)
+    if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
     {
-        uint8_t result = (a << 1) | getFlag(CPU6502::C);
+        uint8_t result = (A << 1) | getFlag(CPU6502::C);
 
-        setFlag(CPU6502::C, (a & 0x80));
+        setFlag(CPU6502::C, (A & 0x80));
         setFlag(CPU6502::Z, (result == 0x00));
         setFlag(CPU6502::N, (result & 0x80));
-        a = result;
+        A = result;
     }
     else
     {
-        uint8_t result = (currentValue << 1) | getFlag(CPU6502::C);
+        uint8_t result = (m_currentValue << 1) | getFlag(CPU6502::C);
 
-        setFlag(CPU6502::C, (currentValue & 0x80));
+        setFlag(CPU6502::C, (m_currentValue & 0x80));
         setFlag(CPU6502::Z, (result == 0x00));
         setFlag(CPU6502::N, (result & 0x80));
-        write(currentAddress, result);
+        write(m_currentAddress, result);
     }
 }
 
 void CPU6502::ROR()
 {
-    if (currentInstruction.addressingMode == &CPU6502::accumulator)
+    if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
     {
-        uint8_t result = (a >> 1) | (getFlag(CPU6502::C) << 7);
+        uint8_t result = (A >> 1) | (getFlag(CPU6502::C) << 7);
 
-        setFlag(CPU6502::C, (a & 0x01));
+        setFlag(CPU6502::C, (A & 0x01));
         setFlag(CPU6502::Z, (result == 0x00));
         setFlag(CPU6502::N, (result & 0x80));
-        a = result;
+        A = result;
     }
     else
     {
-        uint8_t result = (currentValue >> 1) | (getFlag(CPU6502::C) << 7);
+        uint8_t result = (m_currentValue >> 1) | (getFlag(CPU6502::C) << 7);
 
-        setFlag(CPU6502::C, (currentValue & 0x01));
+        setFlag(CPU6502::C, (m_currentValue & 0x01));
         setFlag(CPU6502::Z, (result == 0x00));
         setFlag(CPU6502::N, (result & 0x80));
-        write(currentAddress, result);
+        write(m_currentAddress, result);
     }
 }
 
 void CPU6502::RTI()
 {
-    status = pop();
+    STATUS = pop();
     uint8_t lowByte = pop();
     uint8_t highByte = pop();
     
 
-    pc = (highByte << 8) | lowByte;
+    PC = (highByte << 8) | lowByte;
 }
 
 void CPU6502::RTS()
@@ -974,30 +971,30 @@ void CPU6502::RTS()
     uint16_t lowByte = pop();
     uint8_t highByte = pop();
 
-    pc = (highByte << 8) | lowByte;
-    pc++;
+    PC = (highByte << 8) | lowByte;
+    PC++;
 }
 
 void CPU6502::SBC()
 {
-    uint16_t flipped = currentValue ^ 0xFF;
-    uint16_t result = a + flipped + getFlag(CPUFLAGS::C);
+    uint16_t flipped = m_currentValue ^ 0xFF;
+    uint16_t result = A + flipped + getFlag(CPUFLAGS::C);
 
     if (getFlag(CPUFLAGS::D))
     {
-        result = (a & 0x0F) + (flipped & 0x0F) + getFlag(CPUFLAGS::C);
+        result = (A & 0x0F) + (flipped & 0x0F) + getFlag(CPUFLAGS::C);
         if (result <= 0xF) result -= 0x06;
 
-        result = (a & 0xF0) + (flipped & 0xF0) + (result > 0x0F ? 0x10 : 0) + (result & 0x0F);
+        result = (A & 0xF0) + (flipped & 0xF0) + (result > 0x0F ? 0x10 : 0) + (result & 0x0F);
         if (result <= 0xFF) result -= 0x60;
     }
 
     setFlag(CPUFLAGS::Z, (result & 0xFF) == 0x00);
     setFlag(CPUFLAGS::C, result & 0xFF00);
-    setFlag(CPUFLAGS::V, ((a ^ result) & (flipped ^ result)) & 0x80);
+    setFlag(CPUFLAGS::V, ((A ^ result) & (flipped ^ result)) & 0x80);
     setFlag(CPUFLAGS::N, result & 0x80);
 
-    a = result & 0xFF;
+    A = result & 0xFF;
 }
 
 void CPU6502::SEC()
@@ -1017,57 +1014,57 @@ void CPU6502::SEI()
 
 void CPU6502::STA()
 {
-    write(currentAddress, a);
+    write(m_currentAddress, A);
 }
 
 void CPU6502::STX()
 {
-    write(currentAddress, x);
+    write(m_currentAddress, X);
 }
 
 void CPU6502::STY()
 {
-    write(currentAddress, y);
+    write(m_currentAddress, Y);
 }
 
 void CPU6502::TAX()
 {
-    x = a;
-    setFlag(CPU6502::Z, (x == 0x00));
-    setFlag(CPU6502::N, (x & 0x80));
+    X = A;
+    setFlag(CPU6502::Z, (X == 0x00));
+    setFlag(CPU6502::N, (X & 0x80));
 }
 
 void CPU6502::TAY()
 {
-    y = a;
-    setFlag(CPU6502::Z, (y == 0x00));
-    setFlag(CPU6502::N, (y & 0x80));
+    Y = A;
+    setFlag(CPU6502::Z, (Y == 0x00));
+    setFlag(CPU6502::N, (Y & 0x80));
 }
 
 void CPU6502::TSX()
 {
-    x = sp;
-    setFlag(CPU6502::Z, (x == 0x00));
-    setFlag(CPU6502::N, (x & 0x80));
+    X = SP;
+    setFlag(CPU6502::Z, (X == 0x00));
+    setFlag(CPU6502::N, (X & 0x80));
 }
 
 void CPU6502::TXA()
 {
-    a = x;
-    setFlag(CPU6502::Z, (a == 0x00));
-    setFlag(CPU6502::N, (a & 0x80));
+    A = X;
+    setFlag(CPU6502::Z, (A == 0x00));
+    setFlag(CPU6502::N, (A & 0x80));
 }
 
 void CPU6502::TXS() 
 {
-    sp = x;
+    SP = X;
 }
 
 void CPU6502::TYA()
 {
-    a = y;
-    setFlag(CPU6502::Z, (a == 0x00));
-    setFlag(CPU6502::N, (a & 0x80));
+    A = Y;
+    setFlag(CPU6502::Z, (A == 0x00));
+    setFlag(CPU6502::N, (A & 0x80));
 }
 
 
