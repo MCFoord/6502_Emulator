@@ -2,8 +2,6 @@
 
 #include <memory>
 #include <stdint.h>
-#include <string>
-#include "CPU6502.h"
 #include "Cartridge.h"
 
 class Bus
