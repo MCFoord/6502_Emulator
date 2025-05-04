@@ -287,9 +287,7 @@ CPU6502::~CPU6502()
     
 void CPU6502::tick()
 {
-    if (m_extraCycle) //only for the addressing page boundaries - find a better way later
-        m_extraCycle = false;
-    else if (m_inResetState)
+    if (m_inResetState)
     {
         m_inResetState = false;
         fetch();
@@ -420,45 +418,78 @@ bool CPU6502::relative(uint8_t cycle)
 //look up the page boundary bug for JMP opcode
 bool CPU6502::indirect(uint8_t cycle)
 {
-    uint16_t pointerLow = read(PC++);
-    uint8_t pointerHigh = read(PC);
-
-    m_currentAddress = (pointerHigh << 8) | pointerLow; //lowbyte pointer
-
-    uint16_t lowByte = read(m_currentAddress);
-    uint8_t highByte = read(m_currentAddress + 1);
-
-    if (pointerLow == 0xFF)
-        //unsure if this is actually correct, but i'm tired
-        highByte = read(((m_currentAddress & 0xFF00) << 8) | pointerLow);
-
-    m_currentAddress = (highByte << 8) | lowByte;
-    m_currentValue = read(m_currentAddress);
+    switch (cycle)
+    {
+    case 2:
+        m_addressingPointer = read(PC++);
+        return false;
+    case 3:
+        m_currentAddress = (read(PC) << 8) | m_addressingPointer & 0xFF;
+        return false;
+    case 4:
+        m_addressingPointer = read(m_currentAddress);
+        return false;
+    case 5:
+        if ((m_currentAddress & 0xFF) == 0xFF)
+            m_addressingPointer = read(((m_currentAddress & 0xFF00) << 8) | (m_currentAddress & 0xFF));
+        else
+            m_addressingPointer = (read(m_currentAddress + 1) << 8) | (m_addressingPointer & 0xFF);
+        m_currentAddress = m_addressingPointer;
+        m_currentValue = read(m_currentAddress);
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::indirectX(uint8_t cycle)
 {
-    uint16_t lowByte = (read(PC++) + X) & 0x00FF;
-    uint8_t highByte = (lowByte + 1) & 0xFF;
-
-    m_currentAddress = (read(highByte) << 8) | read(lowByte);
-    m_currentValue = read(m_currentAddress);
+    switch (cycle)
+    {
+    case 2:
+        m_currentAddress = read(PC++);
+        return false;
+    case 3:
+        m_addressingPointer = (read(m_currentAddress) + X) & 0xFF;
+        return false;
+    case 4:
+        m_currentAddress = read(m_addressingPointer);
+        return false;
+    case 5:
+        m_currentAddress = (read((m_addressingPointer + 1) & 0xFF) << 8) | (m_currentAddress & 0xFF);
+        return false;
+    case 6:
+        m_currentValue = read(m_currentAddress);
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::indirectY(uint8_t cycle)
 {
-    uint16_t lowByte = read(PC++);
-    uint8_t highByte = (lowByte + 1) & 0xFF;
-
-    m_currentAddress = ((read(highByte) << 8) | read(lowByte)) + Y;
-    
-    //FIX THIS to match the change above
-    if ((m_currentAddress & 0xFF00) != highByte)
+    switch (cycle)
     {
-        cycles++;
+    case 2:
+        m_addressingPointer = read(PC++);
+        return false;
+    case 3:
+        m_currentAddress = read(m_addressingPointer) & 0xFF;
+        return false;
+    case 4:
+        m_currentAddress = ((read(m_addressingPointer + 1) & 0xFF) << 8) | (m_currentAddress & 0xFF);
+        m_currentAddress += Y;
+        return false;
+    case 5:
+        m_currentValue = read(m_currentAddress);
+        return false;
+    case 6:
+        if ((m_currentAddress & 0xFF00) != ((read(m_addressingPointer + 1) & 0xFF) << 8))
+            return false;
+        return true;
+    default:
+        return true;
     }
-
-    m_currentValue = read(m_currentAddress);
 }
 
 bool CPU6502::absolute(uint8_t cycle)
@@ -473,9 +504,11 @@ bool CPU6502::absolute(uint8_t cycle)
     case 3:
         m_currentAddress = (read(PC++) << 8) | lowByte;
         return false;
-    // case 4:
-    //     m_currentValue = read(m_currentAddress); // this needs to go into each instruction
-    //     return false;
+    case 4:
+        if (m_currentInstruction.instructionName == "JMP")
+            return true;
+        m_currentValue = read(m_currentAddress);
+        return false;
     default:
         return true;
     }
@@ -483,48 +516,99 @@ bool CPU6502::absolute(uint8_t cycle)
 
 bool CPU6502::absoluteX(uint8_t cycle)
 {
-    uint16_t lowByte = read(PC++);
-    uint8_t highByte = read(PC++);
-
-	m_currentAddress = ((highByte << 8) | lowByte) + X;
-	
-    m_currentValue = read(m_currentAddress);
+    switch (cycle)
+    {
+    case 2:
+        m_addressingPointer = read(PC++);
+        return false;
+    case 3:
+        m_addressingPointer = (read(PC++) << 8) | (m_addressingPointer & 0xFF);
+        m_currentAddress = m_addressingPointer + X;
+        return false;
+    case 4:
+        m_currentValue = read(m_currentAddress);
+        return false;
+    case 5:
+        if ((m_currentAddress & 0xFF00) != (m_addressingPointer & 0xFF00))
+            return false;
+        return true;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::absoluteY(uint8_t cycle)
 {
-    uint16_t lowByte = read(PC++);
-    uint8_t highByte = read(PC++);
-
-    m_currentAddress = ((highByte << 8) | lowByte) + Y;
-
-    if ((m_currentAddress & 0xFF00) != highByte)
+    switch (cycle)
     {
-        cycles++;
+    case 2:
+        m_addressingPointer = read(PC++);
+        return false;
+    case 3:
+        m_addressingPointer = (read(PC++) << 8) | (m_addressingPointer & 0xFF);
+        m_currentAddress = m_addressingPointer + Y;
+        return false;
+    case 4:
+        m_currentValue = read(m_currentAddress);
+        return false;
+    case 5:
+        if ((m_currentAddress & 0xFF00) != (m_addressingPointer & 0xFF00))
+            return false; 
+        return true;
+    default:
+        return true;
     }
-
-    m_currentValue = read(m_currentAddress);
 }
 
-/* check this later for any bugs to do with not actually
-    assigning the value address to current address
-*/
 bool CPU6502::zeroPage(uint8_t cycle)
-{
-    m_currentAddress = read(PC++) & 0xFF;
-    m_currentValue = read(m_currentAddress);
+{   
+    switch (cycle)
+    {
+    case 2:
+        m_currentAddress = read(PC++) & 0xFF;
+        return false;
+    case 3:
+        m_currentValue = read(m_currentAddress);
+        return false;
+    default:
+        return true;
+    }
 }   
 
 bool CPU6502::zeroPageX(uint8_t cycle)
 {
-    m_currentAddress = (read(PC++) + X) & 0xFF;
-    m_currentValue = read(m_currentAddress);
+    switch (cycle)
+    {
+    case 2:
+        m_currentAddress = read(PC++);
+        return false;
+    case 3:
+        m_currentAddress = (read(m_currentAddress) + X) & 0xFF;
+        return false;
+    case 4:
+        m_currentValue = read(m_currentAddress);
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::zeroPageY(uint8_t cycle)
 {
-    m_currentAddress = (read(PC++) + Y) & 0xFF;
-    m_currentValue = read(m_currentAddress);
+    switch (cycle)
+    {
+    case 2:
+        m_currentAddress = read(PC++);
+        return false;
+    case 3:
+        m_currentAddress = (read(m_currentAddress) + Y) & 0xFF;
+        return false;
+    case 4:
+        m_currentValue = read(m_currentAddress);
+        return false;
+    default:
+        return true;
+    }
 }
 
 //interrupts
@@ -581,6 +665,7 @@ bool CPU6502::ADC(uint8_t cycle)
     setFlag(CPUFLAGS::N, result & 0x80);
 
     A = result & 0xFF;
+    return true;
 }
 
 bool CPU6502::AND(uint8_t cycle)
@@ -589,16 +674,12 @@ bool CPU6502::AND(uint8_t cycle)
 
     setFlag(CPUFLAGS::Z, A == 0x00);
     setFlag(CPUFLAGS::N, A & 0x80);
-
+    return true;
 }
 
 bool CPU6502::ASL(uint8_t cycle)
-{
-    /*
-    need to worry about where the result is being writen to,
-    need to differentiate between if it's the accumulator or A memory address
-    */
-    
+{   
+    //could go cycles - num cycles
     uint8_t result = (m_currentValue << 1);
 
     setFlag(CPUFLAGS::Z, result == 0x00);
@@ -607,13 +688,9 @@ bool CPU6502::ASL(uint8_t cycle)
 
 
     if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
-    {
         A = result;
-    }
     else
-    {
         write(m_currentAddress, result);
-    }
 }
 
 bool CPU6502::BCC(uint8_t cycle)
@@ -670,6 +747,7 @@ bool CPU6502::BIT(uint8_t cycle)
     setFlag(CPUFLAGS::Z, !result);
     setFlag(CPUFLAGS::V, m_currentValue & 0x40);
     setFlag(CPUFLAGS::N, m_currentValue & 0x80);
+    return true;
 }
 
 bool CPU6502::BMI(uint8_t cycle)
@@ -721,17 +799,31 @@ bool CPU6502::BPL(uint8_t cycle)
 
 bool CPU6502::BRK(uint8_t cycle)
 {
-    setFlag(CPU6502::B, true);
-    setFlag(CPU6502::U, true);
-
-    PC++;
-    push((PC >> 8) & 0xFF);
-    push(PC & 0xFF);
-    push(STATUS);
-
-    setFlag(CPU6502::I, true);
-
-    PC = (read(0xFFFF) << 8) | read(0xFFFE);
+    switch (cycle)
+    {
+    case 2:
+        PC++;
+        return false;
+    case 3:
+        setFlag(CPU6502::B, true);
+        setFlag(CPU6502::U, true);
+        push((PC >> 8) & 0xFF);
+        return false;
+    case 4:
+        push(PC & 0xFF);
+        return false;
+    case 5:
+        push(STATUS);
+        return false;
+    case 6:
+        PC = read(0xFFFE);
+        return false;
+    case 7:
+        PC = (read(0xFFFF) << 8) | (PC & 0xFF);
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::BVC(uint8_t cycle)
@@ -793,6 +885,7 @@ bool CPU6502::CMP(uint8_t cycle)
     setFlag(CPU6502::C, (A >= m_currentValue));
     setFlag(CPU6502::Z, (A == m_currentValue));
     setFlag(CPU6502::N, (result & 0x80));
+    return true;
 }
 
 bool CPU6502::CPX(uint8_t cycle)
@@ -844,6 +937,7 @@ bool CPU6502::EOR(uint8_t cycle)
 
     setFlag(CPU6502::Z, (A == 0x00));
     setFlag(CPU6502::N, (A & 0x80));
+    return true;
 }
 
 bool CPU6502::INC(uint8_t cycle)
@@ -879,10 +973,21 @@ bool CPU6502::JMP(uint8_t cycle)
 
 bool CPU6502::JSR(uint8_t cycle)
 {
-    PC--;
-    push((PC >> 8) & 0xFF);
-    push(PC & 0xFF);
-    PC = m_currentAddress;
+    switch (cycle)
+    {
+    case 4:
+        PC--;
+        push((PC >> 8) & 0xFF);
+        return false;
+    case 5:
+        push(PC & 0xFF);
+        return false;
+    case 6:
+        PC = m_currentAddress;
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::LDA(uint8_t cycle)
@@ -890,6 +995,7 @@ bool CPU6502::LDA(uint8_t cycle)
     A = m_currentValue;
     setFlag(CPU6502::Z, (A == 0x00));
     setFlag(CPU6502::N, (A & 0x80));
+    return true;
 }
 
 bool CPU6502::LDX(uint8_t cycle)
@@ -897,6 +1003,7 @@ bool CPU6502::LDX(uint8_t cycle)
     X = m_currentValue;
     setFlag(CPU6502::Z, (X == 0x00));
     setFlag(CPU6502::N, (X & 0x80));
+    return true;
 }
 
 bool CPU6502::LDY(uint8_t cycle)
@@ -904,6 +1011,7 @@ bool CPU6502::LDY(uint8_t cycle)
     Y = m_currentValue;
     setFlag(CPU6502::Z, (Y == 0x00));
     setFlag(CPU6502::N, (Y & 0x80));
+    return true;
 }
 
 bool CPU6502::LSR(uint8_t cycle)
@@ -928,7 +1036,7 @@ bool CPU6502::LSR(uint8_t cycle)
 
 bool CPU6502::NOP(uint8_t cycle)
 {
-
+    return true;
 }
 
 bool CPU6502::ORA(uint8_t cycle)
@@ -937,30 +1045,71 @@ bool CPU6502::ORA(uint8_t cycle)
 
     setFlag(CPU6502::Z, (A == 0x00));
     setFlag(CPU6502::N, (A & 0x80));
+    return true;
 }
 
 bool CPU6502::PHA(uint8_t cycle)
 {
-    push(A);
+    switch (cycle)
+    {
+    case 2:
+        return false;
+    case 3:
+        push(A);
+        return false;
+    default:
+        return true;
+    }
+    
 }
 
 bool CPU6502::PHP(uint8_t cycle)
-{
-    setFlag(CPU6502::B, true);
-    setFlag(CPU6502::U, true);
-    push(STATUS);
+{   
+    switch (cycle)
+    {
+    case 2:
+        return false;
+    case 3:
+        setFlag(CPU6502::U, true);
+        push(STATUS);
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::PLA(uint8_t cycle)
 {
-    A = pop();
-    setFlag(CPU6502::Z, (A == 0x00));
-    setFlag(CPU6502::N, (A & 0x80));
+    switch (cycle)
+    {
+    case 2:
+        return false;
+    case 3:
+        return false;
+    case 4:
+        A = pop();
+        setFlag(CPU6502::Z, (A == 0x00));
+        setFlag(CPU6502::N, (A & 0x80));
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::PLP(uint8_t cycle)
 {
-    STATUS = pop();
+    switch(cycle)
+    {
+    case 2:
+        return false;
+    case 3:
+        return false;
+    case 4:
+        STATUS = pop();
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::ROL(uint8_t cycle)
@@ -1010,21 +1159,50 @@ bool CPU6502::ROR(uint8_t cycle)
 
 bool CPU6502::RTI(uint8_t cycle)
 {
-    STATUS = pop();
-    uint8_t lowByte = pop();
-    uint8_t highByte = pop();
-    
-
-    PC = (highByte << 8) | lowByte;
+    switch (cycle)
+    {
+    case 2:
+        PC++;
+        return false;
+    case 3:
+        //inc SP done in pop
+        return false;
+    case 4:
+        STATUS = pop();
+        return false;
+    case 5:
+        PC = pop();
+        return false;
+    case 6:
+        PC = (pop() << 8) | (PC & 0xFF);
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::RTS(uint8_t cycle)
 {
-    uint16_t lowByte = pop();
-    uint8_t highByte = pop();
-
-    PC = (highByte << 8) | lowByte;
-    PC++;
+    switch (cycle)
+    {
+    case 2:
+        PC++;
+        return false;
+    case 3:
+        //inc SP done in pop
+        return false;
+    case 4:
+        PC = pop();
+        return false;
+    case 5:
+        PC = (pop() << 8) | (PC & 0xFF);
+        return false;
+    case 6:
+        PC++;
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::SBC(uint8_t cycle)
@@ -1047,36 +1225,43 @@ bool CPU6502::SBC(uint8_t cycle)
     setFlag(CPUFLAGS::N, result & 0x80);
 
     A = result & 0xFF;
+    return true;
 }
 
 bool CPU6502::SEC(uint8_t cycle)
 {
     setFlag(CPUFLAGS::C, true);
+    return true;
 }
 
 bool CPU6502::SED(uint8_t cycle)
 {
     setFlag(CPUFLAGS::D, true);
+    return true;
 }
 
 bool CPU6502::SEI(uint8_t cycle)
 {
     setFlag(CPUFLAGS::I, true);
+    return true;
 }
 
 bool CPU6502::STA(uint8_t cycle)
 {
     write(m_currentAddress, A);
+    return true;
 }
 
 bool CPU6502::STX(uint8_t cycle)
 {
     write(m_currentAddress, X);
+    return true;
 }
 
 bool CPU6502::STY(uint8_t cycle)
 {
     write(m_currentAddress, Y);
+    return true;
 }
 
 bool CPU6502::TAX(uint8_t cycle)
@@ -1084,6 +1269,7 @@ bool CPU6502::TAX(uint8_t cycle)
     X = A;
     setFlag(CPU6502::Z, (X == 0x00));
     setFlag(CPU6502::N, (X & 0x80));
+    return true;
 }
 
 bool CPU6502::TAY(uint8_t cycle)
@@ -1091,6 +1277,7 @@ bool CPU6502::TAY(uint8_t cycle)
     Y = A;
     setFlag(CPU6502::Z, (Y == 0x00));
     setFlag(CPU6502::N, (Y & 0x80));
+    return true;
 }
 
 bool CPU6502::TSX(uint8_t cycle)
@@ -1098,6 +1285,7 @@ bool CPU6502::TSX(uint8_t cycle)
     X = SP;
     setFlag(CPU6502::Z, (X == 0x00));
     setFlag(CPU6502::N, (X & 0x80));
+    return true;
 }
 
 bool CPU6502::TXA(uint8_t cycle)
@@ -1105,11 +1293,13 @@ bool CPU6502::TXA(uint8_t cycle)
     A = X;
     setFlag(CPU6502::Z, (A == 0x00));
     setFlag(CPU6502::N, (A & 0x80));
+    return true;
 }
 
 bool CPU6502::TXS(uint8_t cycle) 
 {
     SP = X;
+    return true;
 }
 
 bool CPU6502::TYA(uint8_t cycle)
@@ -1117,10 +1307,11 @@ bool CPU6502::TYA(uint8_t cycle)
     A = Y;
     setFlag(CPU6502::Z, (A == 0x00));
     setFlag(CPU6502::N, (A & 0x80));
+    return true;
 }
 
 
 bool CPU6502::ILL(uint8_t cycle)
 {
-
+    return false;
 }

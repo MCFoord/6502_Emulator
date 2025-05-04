@@ -39,8 +39,8 @@ private:
     };
 
     bool m_inResetState = true;
-    bool m_extraCycle = false;
-    uint16_t m_currentAddress = 0x000;
+    uint16_t m_currentAddress = 0x0000;
+    uint16_t m_addressingPointer = 0x0000;
     uint8_t m_currentValue = 0x00;
     instruction m_currentInstruction;
     uint8_t m_instructionCycleCount = 0;
