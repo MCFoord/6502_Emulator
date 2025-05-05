@@ -505,7 +505,7 @@ bool CPU6502::absolute(uint8_t cycle)
         m_currentAddress = (read(PC++) << 8) | lowByte;
         return false;
     case 4:
-        if (m_currentInstruction.instructionName == "JMP")
+        if (m_currentInstruction.operation == &CPU6502::JMP)
             return true;
         m_currentValue = read(m_currentAddress);
         return false;
@@ -612,37 +612,64 @@ bool CPU6502::zeroPageY(uint8_t cycle)
 }
 
 //interrupts
-void CPU6502::NMI()
+bool CPU6502::NMI(uint8_t cycle)
 {
-    setFlag(CPU6502::B, false);
-    setFlag(CPU6502::U, false);
-
-    PC++;
-    push((PC >> 8) & 0xFF);
-    push(PC & 0xFF);
-    push(STATUS);
-
-    setFlag(CPU6502::I, true);
-
-    PC = (read(0xFFFB) << 8) | read(0xFFFA);
+    switch (cycle)
+    {
+    case 2:
+        PC++;
+        return false;
+    case 3:
+        setFlag(CPU6502::U, false);
+        push((PC >> 8) & 0xFF);
+        return false;
+    case 4:
+        push(PC & 0xFF);
+        return false;
+    case 5:
+        push(STATUS);
+        return false;
+    case 6:
+        setFlag(CPU6502::I, true);
+        PC = read(0xFFFA);
+        return false;
+    case 7:
+        PC = (read(0xFFFB) << 8) | (PC & 0xFF);
+        return false;
+    default:
+        return true;
+    }
 }
 
-void CPU6502::IRQ()
+bool CPU6502::IRQ(uint8_t cycle)
 {
-    if (getFlag(CPU6502::I))
-        return;
-    
-    setFlag(CPU6502::B, false);
-    setFlag(CPU6502::U, false);
-
-    PC++;
-    push((PC >> 8) & 0xFF);
-    push(PC & 0xFF);
-    push(STATUS);
-
-    setFlag(CPU6502::I, true);
-
-    PC = (read(0xFFFF) << 8) | read(0xFFFE);
+    switch (cycle)
+    {
+    case 2:
+        if (getFlag(CPU6502::I))
+            return true;
+        PC++;
+        return false;
+    case 3:
+        setFlag(CPU6502::U, false);
+        push((PC >> 8) & 0xFF);
+        return false;
+    case 4:
+        push(PC & 0xFF);
+        return false;
+    case 5:
+        push(STATUS);
+        return false;
+    case 6:
+        setFlag(CPU6502::I, true);
+        PC = read(0xFFFE);
+        return false;
+    case 7:
+        PC = (read(0xFFFF) << 8) | (PC & 0xFF);
+        return false;
+    default:
+        return true;
+    }
 }
 
 // inctructions
@@ -678,65 +705,81 @@ bool CPU6502::AND(uint8_t cycle)
 }
 
 bool CPU6502::ASL(uint8_t cycle)
-{   
-    //could go cycles - num cycles
-    uint8_t result = (m_currentValue << 1);
+{
+    switch (cycle)
+    {
+    case 1:
+    {        
+        uint8_t result = (m_currentValue << 1);
 
-    setFlag(CPUFLAGS::Z, result == 0x00);
-    setFlag(CPUFLAGS::C, m_currentValue & 0x80);
-    setFlag(CPUFLAGS::N, result & 0x80);
-
-
-    if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
-        A = result;
-    else
-        write(m_currentAddress, result);
+        setFlag(CPUFLAGS::Z, result == 0x00);
+        setFlag(CPUFLAGS::C, m_currentValue & 0x80);
+        setFlag(CPUFLAGS::N, result & 0x80);
+        m_currentValue = result;
+        return false;
+    }
+    case 2:
+        if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
+            A = m_currentValue;
+        else
+            write(m_currentAddress, m_currentValue);
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::BCC(uint8_t cycle)
 {
-    if (!getFlag(CPUFLAGS::C))
+    switch (cycle)
     {
-        cycles++;
-
-        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
-        {
-            cycles++;
-        }
-
+    case 1:
+        if (getFlag(CPUFLAGS::C))
+            return true;
         PC = m_currentAddress;
+        return false;
+    case 2:
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
+            return false;
+        return true;
+    default:
+        return true;
     }
 }
 
 bool CPU6502::BCS(uint8_t cycle)
 {
-    if (getFlag(CPUFLAGS::C))
+    switch (cycle)
     {
-        cycles++;
-        uint16_t rel = PC + m_currentValue;
-
-        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
-        {
-            cycles++;
-        }
-
+    case 1:
+        if (! getFlag(CPUFLAGS::C))
+            return true;
         PC = m_currentAddress;
+        return false;
+    case 2:
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
+            return false;
+        return true;
+    default:
+        return true;
     }
 }
 
 bool CPU6502::BEQ(uint8_t cycle)
 {
-    if (getFlag(CPUFLAGS::Z))
+    switch (cycle)
     {
-        cycles++;
-        uint16_t rel = PC + m_currentValue;
-
-        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
-        {
-            cycles++;
-        }
-
+    case 1:
+        if (! getFlag(CPUFLAGS::Z))
+            return true;
         PC = m_currentAddress;
+        return false;
+    case 2:
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
+            return false;
+        return true;
+    default:
+        return true;
     }
 }
 
@@ -752,48 +795,55 @@ bool CPU6502::BIT(uint8_t cycle)
 
 bool CPU6502::BMI(uint8_t cycle)
 {
-    if (getFlag(CPUFLAGS::N))
+    switch (cycle)
     {
-        cycles++;
-        uint16_t rel = PC + m_currentValue;
-
-        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
-        {
-            cycles++;
-        }
-
+    case 1:
+        if (! getFlag(CPUFLAGS::N))
+            return true;
         PC = m_currentAddress;
+        return false;
+    case 2:
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
+            return false;
+        return true;
+    default:
+        return true;
     }
 }
 
 bool CPU6502::BNE(uint8_t cycle)
 {
-    if (!getFlag(CPUFLAGS::Z))
+    switch (cycle)
     {
-        cycles++;
-
-        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
-        {
-            cycles++;
-        }
-
+    case 1:
+        if (getFlag(CPUFLAGS::Z))
+            return true;
         PC = m_currentAddress;
+        return false;
+    case 2:
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
+            return false;
+        return true;
+    default:
+        return true;
     }
 }
 
 bool CPU6502::BPL(uint8_t cycle)
 {
-    if (!getFlag(CPUFLAGS::N))
+    switch (cycle)
     {
-        cycles++;
-        uint16_t rel = PC + m_currentValue;
-
-        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
-        {
-            cycles++;
-        }
-
+    case 1:
+        if (getFlag(CPUFLAGS::N))
+            return true;
         PC = m_currentAddress;
+        return false;
+    case 2:
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
+            return false;
+        return true;
+    default:
+        return true;
     }
 }
 
@@ -828,54 +878,62 @@ bool CPU6502::BRK(uint8_t cycle)
 
 bool CPU6502::BVC(uint8_t cycle)
 {
-    if (!getFlag(CPUFLAGS::V))
+    switch (cycle)
     {
-        cycles++;
-        uint16_t rel = PC + m_currentValue;
-
-        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
-        {
-            cycles++;
-        }
-
+    case 1:
+        if (getFlag(CPUFLAGS::V))
+            return true;
         PC = m_currentAddress;
+        return false;
+    case 2:
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
+            return false;
+        return true;
+    default:
+        return true;
     }
 }
 
 bool CPU6502::BVS(uint8_t cycle)
 {
-    if (getFlag(CPUFLAGS::V))
+    switch (cycle)
     {
-        cycles++;
-        uint16_t rel = PC + m_currentValue;
-
-        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
-        {
-            cycles++;
-        }
-
+    case 1:
+        if (! getFlag(CPUFLAGS::V))
+            return true;
         PC = m_currentAddress;
+        return false;
+    case 2:
+        if ((m_currentAddress & 0xFF00) != (PC & 0xFF00))
+            return false;
+        return true;
+    default:
+        return true;
     }
 }
 
 bool CPU6502::CLC(uint8_t cycle)
 {
     setFlag(CPU6502::C, false);
+    return true;
 }
 
 bool CPU6502::CLD(uint8_t cycle)
 {
     setFlag(CPU6502::D, false);
+    return true;
 }
 
 bool CPU6502::CLI(uint8_t cycle)
 {
     setFlag(CPU6502::I, false);
+    return true;
 }
 
 bool CPU6502::CLV(uint8_t cycle)
 {
     setFlag(CPU6502::V, false);
+    return true;
 }
 
 bool CPU6502::CMP(uint8_t cycle)
@@ -895,6 +953,7 @@ bool CPU6502::CPX(uint8_t cycle)
     setFlag(CPU6502::C, (X >= m_currentValue));
     setFlag(CPU6502::Z, (X == m_currentValue));
     setFlag(CPU6502::N, (result & 0x80));
+    return true;
 }
 
 bool CPU6502::CPY(uint8_t cycle)
@@ -904,15 +963,24 @@ bool CPU6502::CPY(uint8_t cycle)
     setFlag(CPU6502::C, (Y >= m_currentValue));
     setFlag(CPU6502::Z, (Y == m_currentValue));
     setFlag(CPU6502::N, (result & 0x80));
+    return true;
 }
 
 bool CPU6502::DEC(uint8_t cycle)
 {
-    uint8_t result = m_currentValue - 1;
-
-    write(m_currentAddress, result);
-    setFlag(CPU6502::Z, (result == 0x00));
-    setFlag(CPU6502::N, (result & 0x80));
+    switch (cycle)
+    {
+    case 1:
+        m_currentValue--;
+        setFlag(CPU6502::Z, (m_currentValue == 0x00));
+        setFlag(CPU6502::N, (m_currentValue & 0x80));
+        return false;
+    case 2:
+        write(m_currentAddress, m_currentValue);
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::DEX(uint8_t cycle)
@@ -921,6 +989,7 @@ bool CPU6502::DEX(uint8_t cycle)
 
     setFlag(CPU6502::Z, (X == 0x00));
     setFlag(CPU6502::N, (X & 0x80));
+    return true;
 }
 
 bool CPU6502::DEY(uint8_t cycle)
@@ -929,6 +998,7 @@ bool CPU6502::DEY(uint8_t cycle)
 
     setFlag(CPU6502::Z, (Y == 0x00));
     setFlag(CPU6502::N, (Y & 0x80));
+    return true;
 }
 
 bool CPU6502::EOR(uint8_t cycle)
@@ -942,33 +1012,42 @@ bool CPU6502::EOR(uint8_t cycle)
 
 bool CPU6502::INC(uint8_t cycle)
 {
-    uint8_t result = m_currentValue + 1;
-
-    write(m_currentAddress, result);
-    setFlag(CPU6502::Z, (result == 0x00));
-    setFlag(CPU6502::N, (result & 0x80));
+    switch (cycle)
+    {
+    case 1: 
+        m_currentValue++;
+        setFlag(CPU6502::Z, (m_currentValue == 0x00));
+        setFlag(CPU6502::N, (m_currentValue & 0x80));
+        return false;
+    case 2:
+        write(m_currentAddress, m_currentValue);
+        return false;
+    default:
+        return true;
+    }
 }
 
 bool CPU6502::INX(uint8_t cycle)
 {
     X++;
-
     setFlag(CPU6502::Z, (X == 0x00));
     setFlag(CPU6502::N, (X & 0x80));
+    return true;
 }
 
 bool CPU6502::INY(uint8_t cycle)
 {
     Y++;
-
     setFlag(CPU6502::Z, (Y == 0x00));
     setFlag(CPU6502::N, (Y & 0x80));
+    return true;
 }
 
 //go to indirect page boundary bug
 bool CPU6502::JMP(uint8_t cycle)
 {
     PC = m_currentAddress;
+    return true;
 }
 
 bool CPU6502::JSR(uint8_t cycle)
@@ -1016,21 +1095,27 @@ bool CPU6502::LDY(uint8_t cycle)
 
 bool CPU6502::LSR(uint8_t cycle)
 {
-    if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
+    switch (cycle)
     {
-        setFlag(CPU6502::C, (A & 0x01));
-        A = (A >> 1);
-        setFlag(CPU6502::Z, (A == 0x00));
-        setFlag(CPU6502::N, (A & 0x80));
-    }
-    else
+    case 1:
     {
+        m_currentValue = (m_currentInstruction.addressingMode == &CPU6502::accumulator) ? A : m_currentValue;
         uint8_t result = (m_currentValue >> 1);
 
         setFlag(CPU6502::C, (m_currentValue & 0x01));
         setFlag(CPU6502::Z, (result == 0x00));
         setFlag(CPU6502::N, (result & 0x80));
-        write(m_currentAddress, result);
+        m_currentValue = result;
+        return false;
+    }
+    case 2:
+        if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
+            A = m_currentValue;
+        else
+            write(m_currentAddress, m_currentValue);
+        return false;
+    default:
+        return true;
     }
 }
 
@@ -1060,7 +1145,6 @@ bool CPU6502::PHA(uint8_t cycle)
     default:
         return true;
     }
-    
 }
 
 bool CPU6502::PHP(uint8_t cycle)
@@ -1114,46 +1198,53 @@ bool CPU6502::PLP(uint8_t cycle)
 
 bool CPU6502::ROL(uint8_t cycle)
 {
-    
-    if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
+    switch (cycle)
     {
-        uint8_t result = (A << 1) | getFlag(CPU6502::C);
-
-        setFlag(CPU6502::C, (A & 0x80));
-        setFlag(CPU6502::Z, (result == 0x00));
-        setFlag(CPU6502::N, (result & 0x80));
-        A = result;
-    }
-    else
+    case 1:
     {
+        m_currentValue = (m_currentInstruction.addressingMode == &CPU6502::accumulator) ? A : m_currentValue;
         uint8_t result = (m_currentValue << 1) | getFlag(CPU6502::C);
 
-        setFlag(CPU6502::C, (m_currentValue & 0x80));
+        setFlag(CPU6502::C, (m_currentValue & 0x01));
         setFlag(CPU6502::Z, (result == 0x00));
         setFlag(CPU6502::N, (result & 0x80));
-        write(m_currentAddress, result);
+        m_currentValue = result;
+        return false;
+    }
+    case 2:
+        if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
+            A = m_currentValue;
+        else
+            write(m_currentAddress, m_currentValue);
+        return false;
+    default:
+        return true;
     }
 }
 
 bool CPU6502::ROR(uint8_t cycle)
 {
-    if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
+    switch (cycle)
     {
-        uint8_t result = (A >> 1) | (getFlag(CPU6502::C) << 7);
-
-        setFlag(CPU6502::C, (A & 0x01));
-        setFlag(CPU6502::Z, (result == 0x00));
-        setFlag(CPU6502::N, (result & 0x80));
-        A = result;
-    }
-    else
+    case 1:
     {
+        m_currentValue = (m_currentInstruction.addressingMode == &CPU6502::accumulator) ? A : m_currentValue;
         uint8_t result = (m_currentValue >> 1) | (getFlag(CPU6502::C) << 7);
 
         setFlag(CPU6502::C, (m_currentValue & 0x01));
         setFlag(CPU6502::Z, (result == 0x00));
         setFlag(CPU6502::N, (result & 0x80));
-        write(m_currentAddress, result);
+        m_currentValue = result;
+        return false;
+    }
+    case 2:
+        if (m_currentInstruction.addressingMode == &CPU6502::accumulator)
+            A = m_currentValue;
+        else
+            write(m_currentAddress, m_currentValue);
+        return false;
+    default:
+        return true;
     }
 }
 

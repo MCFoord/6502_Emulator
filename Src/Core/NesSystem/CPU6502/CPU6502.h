@@ -87,8 +87,8 @@ private:
     bool zeroPageY(uint8_t cycle);
 
     //interrupts
-    void NMI();
-    void IRQ();
+    bool NMI(uint8_t cycle);
+    bool IRQ(uint8_t cycle);
 
     //instructions
     bool ADC(uint8_t cycle);
