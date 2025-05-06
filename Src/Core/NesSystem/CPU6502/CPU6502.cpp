@@ -631,6 +631,7 @@ bool CPU6502::NMI(uint8_t cycle)
         PC++;
         return false;
     case 3:
+        setFlag(CPUFLAGS::B, false);
         setFlag(CPU6502::U, false);
         push((PC >> 8) & 0xFF);
         return false;
@@ -662,6 +663,7 @@ bool CPU6502::IRQ(uint8_t cycle)
         PC++;
         return false;
     case 3:
+        setFlag(CPUFLAGS::B, false);
         setFlag(CPU6502::U, false);
         push((PC >> 8) & 0xFF);
         return false;
