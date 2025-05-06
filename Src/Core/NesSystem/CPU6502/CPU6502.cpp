@@ -315,8 +315,7 @@ bool CPU6502::tick()
 
 void CPU6502::reset()
 {
-    // PC = 0xFFFC;
-    PC = 0x0400;
+    PC = 0xFFFC;
     A = 0x00;
     X = 0x00;
     Y = 0x00;

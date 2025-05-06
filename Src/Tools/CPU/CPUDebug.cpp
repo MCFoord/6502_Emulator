@@ -194,9 +194,7 @@ int main(int argc, char **argv)
 
         case 'a':
         {
-            //fix this up to use cpu state to test for the success or fail states
             CPUState currState = cpu->getCPUState();
-            // while (cpu->currentInstruction.instructionName != "ILL" && pcRepeatCount < 3 && !success)
             while (currState.instructionName != "ILL" && !PCRepeat && !success)
             {
                 executeInstruction(cpu);
@@ -211,7 +209,6 @@ int main(int argc, char **argv)
                 currentPC = currState.PC;
                 instructionCount++;
             }
-            // cpu->printOperation(cpu->pc, debugOutput);
             break;
         }
         case 'b':
@@ -234,8 +231,6 @@ int main(int argc, char **argv)
                 }
                 ++count;
             }
-
-            // cpu->printOperation(cpu->pc, debugOutput);
             break;
 
         case 'r':

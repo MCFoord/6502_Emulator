@@ -69,11 +69,3 @@ void Bus::loadProgram(const char* fileName)
 
     file.read(reinterpret_cast<char*>(m_RAM.data()), length);
 }
-
-// void Bus::clearmemory()
-// {
-//     for (int i = 0x0000; i <= 0xFFFF; i++)
-//     {
-//         ram[i] = 0x00;
-//     }
-// }

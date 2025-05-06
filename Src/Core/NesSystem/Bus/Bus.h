@@ -21,8 +21,8 @@ public:
     void connectCartridge(std::shared_ptr<Cartridge> cartridge) { m_cartridge = cartridge; }
     void disconnectCartridge() { m_cartridge = nullptr; }
 
+    //for CPUDebug tool
     void loadProgram(const char* fileName);
-    // void clearmemory();
 
 private:
     std::vector<uint8_t> m_RAM;
