@@ -285,25 +285,38 @@ CPU6502::~CPU6502()
     
 }
     
-void CPU6502::tick()
+bool CPU6502::tick()
 {
     if (m_inResetState)
     {
         m_inResetState = false;
         fetch();
+        m_instructionCycleCount++;
+        return true;
     }
-    else if ((this->*m_currentInstruction.operation)(m_instructionCycleCount))
+    else if (! (this->*m_currentInstruction.addressingMode)(m_instructionCycleCount))
     {
-        m_instructionCycleCount = 0;
+        m_instructionCycleCount++;
+        return false;
+    }
+    else if ((this->*m_currentInstruction.operation)(m_internalCycleCount))
+    {
+        m_instructionCycleCount = 1;
+        m_internalCycleCount = 1;
         fetch();
+        m_instructionCycleCount++;
+        return true;
     }
 
     m_instructionCycleCount++;
+    m_internalCycleCount++;
+    return false;
 }
 
 void CPU6502::reset()
 {
-    PC = 0xFFFC;
+    // PC = 0xFFFC;
+    PC = 0x0400;
     A = 0x00;
     X = 0x00;
     Y = 0x00;
@@ -315,7 +328,8 @@ void CPU6502::reset()
     m_currentValue = 0x00;
     m_currentInstruction = {};
     m_inResetState = true;
-    m_instructionCycleCount = 0;
+    m_instructionCycleCount = 1;
+    m_internalCycleCount = 1;
 }
 
 void CPU6502::fetch()
@@ -450,7 +464,7 @@ bool CPU6502::indirectX(uint8_t cycle)
         m_currentAddress = read(PC++);
         return false;
     case 3:
-        m_addressingPointer = (read(m_currentAddress) + X) & 0xFF;
+        m_addressingPointer = (m_currentAddress + X) & 0xFF;
         return false;
     case 4:
         m_currentAddress = read(m_addressingPointer);
@@ -494,15 +508,13 @@ bool CPU6502::indirectY(uint8_t cycle)
 
 bool CPU6502::absolute(uint8_t cycle)
 {
-    uint16_t lowByte = 0;
-
     switch (cycle)
     {
     case 2:
-        lowByte = read(PC++);
+        m_currentAddress = read(PC++);
         return false;
     case 3:
-        m_currentAddress = (read(PC++) << 8) | lowByte;
+        m_currentAddress = (read(PC++) << 8) | (m_currentAddress & 0xFF);
         return false;
     case 4:
         if (m_currentInstruction.operation == &CPU6502::JMP)
@@ -583,7 +595,7 @@ bool CPU6502::zeroPageX(uint8_t cycle)
         m_currentAddress = read(PC++);
         return false;
     case 3:
-        m_currentAddress = (read(m_currentAddress) + X) & 0xFF;
+        m_currentAddress = m_currentAddress + X & 0xFF;
         return false;
     case 4:
         m_currentValue = read(m_currentAddress);
@@ -601,7 +613,7 @@ bool CPU6502::zeroPageY(uint8_t cycle)
         m_currentAddress = read(PC++);
         return false;
     case 3:
-        m_currentAddress = (read(m_currentAddress) + Y) & 0xFF;
+        m_currentAddress = m_currentAddress + Y & 0xFF;
         return false;
     case 4:
         m_currentValue = read(m_currentAddress);
@@ -851,24 +863,25 @@ bool CPU6502::BRK(uint8_t cycle)
 {
     switch (cycle)
     {
-    case 2:
+    case 1:
         PC++;
         return false;
-    case 3:
+    case 2:
         setFlag(CPU6502::B, true);
         setFlag(CPU6502::U, true);
         push((PC >> 8) & 0xFF);
         return false;
-    case 4:
+    case 3:
         push(PC & 0xFF);
         return false;
-    case 5:
+    case 4:
         push(STATUS);
+        setFlag(CPU6502::I, true);
         return false;
-    case 6:
+    case 5:
         PC = read(0xFFFE);
         return false;
-    case 7:
+    case 6:
         PC = (read(0xFFFF) << 8) | (PC & 0xFF);
         return false;
     default:
@@ -1054,14 +1067,14 @@ bool CPU6502::JSR(uint8_t cycle)
 {
     switch (cycle)
     {
-    case 4:
+    case 1:
         PC--;
         push((PC >> 8) & 0xFF);
         return false;
-    case 5:
+    case 2:
         push(PC & 0xFF);
         return false;
-    case 6:
+    case 3:
         PC = m_currentAddress;
         return false;
     default:
@@ -1137,9 +1150,9 @@ bool CPU6502::PHA(uint8_t cycle)
 {
     switch (cycle)
     {
-    case 2:
+    case 1:
         return false;
-    case 3:
+    case 2:
         push(A);
         return false;
     default:
@@ -1151,9 +1164,10 @@ bool CPU6502::PHP(uint8_t cycle)
 {   
     switch (cycle)
     {
-    case 2:
+    case 1:
         return false;
-    case 3:
+    case 2:
+        setFlag(CPUFLAGS::B, true);
         setFlag(CPU6502::U, true);
         push(STATUS);
         return false;
@@ -1166,11 +1180,11 @@ bool CPU6502::PLA(uint8_t cycle)
 {
     switch (cycle)
     {
+    case 1:
+        return false;
     case 2:
         return false;
     case 3:
-        return false;
-    case 4:
         A = pop();
         setFlag(CPU6502::Z, (A == 0x00));
         setFlag(CPU6502::N, (A & 0x80));
@@ -1184,11 +1198,11 @@ bool CPU6502::PLP(uint8_t cycle)
 {
     switch(cycle)
     {
+    case 1:
+        return false;
     case 2:
         return false;
     case 3:
-        return false;
-    case 4:
         STATUS = pop();
         return false;
     default:
@@ -1202,10 +1216,10 @@ bool CPU6502::ROL(uint8_t cycle)
     {
     case 1:
     {
-        m_currentValue = (m_currentInstruction.addressingMode == &CPU6502::accumulator) ? A : m_currentValue;
+        // m_currentValue = (m_currentInstruction.addressingMode == &CPU6502::accumulator) ? A : m_currentValue;
         uint8_t result = (m_currentValue << 1) | getFlag(CPU6502::C);
 
-        setFlag(CPU6502::C, (m_currentValue & 0x01));
+        setFlag(CPU6502::C, (m_currentValue & 0x80));
         setFlag(CPU6502::Z, (result == 0x00));
         setFlag(CPU6502::N, (result & 0x80));
         m_currentValue = result;
@@ -1228,7 +1242,7 @@ bool CPU6502::ROR(uint8_t cycle)
     {
     case 1:
     {
-        m_currentValue = (m_currentInstruction.addressingMode == &CPU6502::accumulator) ? A : m_currentValue;
+        // m_currentValue = (m_currentInstruction.addressingMode == &CPU6502::accumulator) ? A : m_currentValue;
         uint8_t result = (m_currentValue >> 1) | (getFlag(CPU6502::C) << 7);
 
         setFlag(CPU6502::C, (m_currentValue & 0x01));
@@ -1252,19 +1266,19 @@ bool CPU6502::RTI(uint8_t cycle)
 {
     switch (cycle)
     {
-    case 2:
+    case 1:
         PC++;
         return false;
-    case 3:
+    case 2:
         //inc SP done in pop
         return false;
-    case 4:
+    case 3:
         STATUS = pop();
         return false;
-    case 5:
+    case 4:
         PC = pop();
         return false;
-    case 6:
+    case 5:
         PC = (pop() << 8) | (PC & 0xFF);
         return false;
     default:
@@ -1276,19 +1290,19 @@ bool CPU6502::RTS(uint8_t cycle)
 {
     switch (cycle)
     {
-    case 2:
+    case 1:
         PC++;
         return false;
-    case 3:
+    case 2:
         //inc SP done in pop
         return false;
-    case 4:
+    case 3:
         PC = pop();
         return false;
-    case 5:
+    case 4:
         PC = (pop() << 8) | (PC & 0xFF);
         return false;
-    case 6:
+    case 5:
         PC++;
         return false;
     default:
@@ -1404,5 +1418,5 @@ bool CPU6502::TYA(uint8_t cycle)
 
 bool CPU6502::ILL(uint8_t cycle)
 {
-    return false;
+    return true;
 }

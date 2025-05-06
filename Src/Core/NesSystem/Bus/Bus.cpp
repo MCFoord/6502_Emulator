@@ -1,4 +1,5 @@
 #include "Bus.h"
+#include <fstream>
 
 uint8_t Bus::read(uint16_t addr)
 {
@@ -59,15 +60,15 @@ void Bus::PPUWrite(uint16_t addr, uint8_t value)
     
 }
 
-// void Bus::loadProgram(const char* fileName)
-// {
-//     std::ifstream file(fileName, std::ios::binary);
-//     file.seekg (0, file.end);
-//     int length = file.tellg();
-//     file.seekg (0, file.beg);
+void Bus::loadProgram(const char* fileName)
+{
+    std::ifstream file(fileName, std::ios::binary);
+    file.seekg (0, file.end);
+    int length = file.tellg();
+    file.seekg (0, file.beg);
 
-//     file.read(reinterpret_cast<char*>(ram), length);
-// }
+    file.read(reinterpret_cast<char*>(m_RAM.data()), length);
+}
 
 // void Bus::clearmemory()
 // {

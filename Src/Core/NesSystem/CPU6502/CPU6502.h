@@ -6,7 +6,28 @@
 #include <string>
 #include "Bus.h"
 
-// class Bus;
+struct CPUState
+{
+    uint8_t A = 0;
+    uint8_t X = 0;
+    uint8_t Y = 0;
+    uint8_t SP = 0;
+    uint16_t PC = 0;
+    bool C = false;
+    bool Z = false;
+    bool I = false;
+    bool D = false;
+    bool B = false;
+    bool U = false;
+    bool V = false;
+    bool N = false;
+    uint8_t opcode = 0;
+    uint8_t instructionCycle = 0;
+    std::string instructionName = "";
+    std::string addressingModeName = "";
+    uint8_t currentValue = 0;
+    uint16_t currentAddress = 0;
+};
 
 class CPU6502
 {
@@ -15,9 +36,33 @@ public:
     ~CPU6502();
 
     void connectBus(std::shared_ptr<Bus> bus) { m_bus = bus; }
-    void tick();
+    bool tick();
     void reset();
-
+    CPUState getCPUState()
+    {
+        return CPUState
+        {
+            .A = A,
+            .X = X,
+            .Y = Y,
+            .SP = SP,
+            .PC = PC,
+            .C = getFlag(CPUFLAGS::C),
+            .Z = getFlag(CPUFLAGS::Z),
+            .I = getFlag(CPUFLAGS::I),
+            .D = getFlag(CPUFLAGS::D),
+            .B = getFlag(CPUFLAGS::B),
+            .U = getFlag(CPUFLAGS::U),
+            .V = getFlag(CPUFLAGS::V),
+            .N = getFlag(CPUFLAGS::N),
+            .opcode = m_currentInstruction.opcode,
+            .instructionCycle = m_instructionCycleCount,
+            .instructionName = m_currentInstruction.instructionName,
+            .addressingModeName = m_currentInstruction.addressingModeName,
+            .currentValue = m_currentValue,
+            .currentAddress = m_currentAddress
+        };
+    }
 
 private:
     //registers
@@ -43,7 +88,8 @@ private:
     uint16_t m_addressingPointer = 0x0000;
     uint8_t m_currentValue = 0x00;
     instruction m_currentInstruction;
-    uint8_t m_instructionCycleCount = 0;
+    uint8_t m_instructionCycleCount = 1;
+    uint8_t m_internalCycleCount = 1;
 
     enum CPUFLAGS
     {
