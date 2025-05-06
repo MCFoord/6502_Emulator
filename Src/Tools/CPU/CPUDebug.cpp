@@ -5,11 +5,12 @@
 #include <Bus.h>
 #include <fstream>
 #include <sstream>
+#include <string>
 
 #define WINDOW_HEIGHT 50
 #define WINDOW_WIDTH 50
 
-std::string memToString(uint16_t start, uint16_t end)
+std::string memToString(std::shared_ptr<Bus> bus, uint16_t start, uint16_t end)
 {
 
     std::stringstream ss;
@@ -28,11 +29,55 @@ std::string memToString(uint16_t start, uint16_t end)
         {
             ss << "\n" << std::setfill('0') << std::setw(2) << std::hex << count / 16 << "  ";
         }
-        ss << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(ram[i]) << " ";
+        ss << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(bus->read(i)) << " ";
         ++count;
     }
 
     return ss.str();
+}
+
+std::string registerToString(CPUState state)
+{
+    std::stringstream ss;
+    ss << "A: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(state.A) << ", "
+       << "X: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(state.X) << ", "
+       << "Y: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(state.Y) << ", "
+       << "SP: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(state.SP) << ", "
+       << "PC: " << std::setfill('0') << std::setw(4) << std::hex << static_cast<int>(state.PC);
+      
+    return ss.str();
+}
+
+std::string instructionInfoToString(CPUState state)
+{
+    std::stringstream ss;
+
+    ss << "PC value: (" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(state.opcode) << ") "
+       << ", Next Instruction: " << state.instructionName << ", Adressing Mode: " << state.addressingModeName << "\n"
+       << "Previous operation: {address: " << std::setfill('0') << std::setw(4) << std::hex << static_cast<int>(state.currentAddress)
+       << ", Value: " << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(state.currentValue) << "}\n";
+
+    return ss.str();
+}
+
+std::string statusToString(CPUState state)
+{
+    std::stringstream ss;
+    ss << "C: " << state.C << ", "
+       << "Z: " << state.Z << ", "
+       << "I: " << state.I << ", "
+       << "D: " << state.D << ", "
+       << "B: " << state.B << ", "
+       << "U: " << state.U << ", "
+       << "V: " << state.V << ", "
+       << "N: " << state.N;
+
+    return ss.str();
+}
+
+void executeInstruction(std::shared_ptr<CPU6502> cpu)
+{
+    while (! cpu->tick()) {}
 }
 
 int main(int argc, char **argv)
@@ -65,7 +110,7 @@ int main(int argc, char **argv)
     }
 
     std::shared_ptr<CPU6502> cpu = std::make_shared<CPU6502>();
-    std::shared_ptr<Bus> bus1 = std::make_shared<Bus>();
+    std::shared_ptr<Bus> bus1 = std::make_shared<Bus>(64 * 1024);
 
 
     cpu->connectBus(bus1);
@@ -93,33 +138,36 @@ int main(int argc, char **argv)
         addstr("--------------------------------------------------------\n\n\n");
         refresh();
 
-        cpu->fetch();
+        CPUState state = cpu->getCPUState();
         addstr("instruction Count: ");
         addstr(std::to_string(instructionCount).c_str());
         addstr("\n");
-        addstr("Registers:\n\n");
-        addstr(cpu->registerToString().c_str());
+        addstr("instruction cycle: ");
+        addstr(std::to_string(state.instructionCycle).c_str());
         addstr("\n");
-        addstr(cpu->instructionInfoToString().c_str());
+        addstr("Registers:\n\n");
+        addstr(registerToString(state).c_str());
+        addstr("\n");
+        addstr(instructionInfoToString(state).c_str());
         addstr("\n\n");
         refresh();
 
         addstr("Status:\n\n");
-        addstr(cpu->statusToString().c_str());
+        addstr(statusToString(state).c_str());
         addstr("\n\n");
         refresh();
 
         addstr("Zero Page:\n\n");
-        addstr(bus1->memToString(0x0000, 0x00FF).c_str());
+        addstr(memToString(bus1, 0x0000, 0x00FF).c_str());
         addstr("\n\n");
         refresh();
 
         addstr("Stack:\n\n");
-        addstr(bus1->memToString(0x0100, 0x01FF).c_str());
+        addstr(memToString(bus1, 0x0100, 0x01FF).c_str());
         addstr("\n\n");
 
         addstr("Program Data:\n\n");
-        addstr(bus1->memToString(0x0400, 0x04FF).c_str());
+        addstr(memToString(bus1, 0x0400, 0x04FF).c_str());
         addstr("\n\n");
 
         refresh();
@@ -127,13 +175,16 @@ int main(int argc, char **argv)
         int ch = getch();
         int count = 0;
         uint16_t currentPC = 0x00;
-        int pcRepeatCount = 0;
+        bool PCRepeat = false;
         bool success = false;
 
         switch (ch)
         {
+        case 't':
+            cpu->tick();
+            break;
         case 'e':
-            cpu->execute(debugOutput);
+            executeInstruction(cpu);
             instructionCount++;
             break;
             
@@ -142,52 +193,44 @@ int main(int argc, char **argv)
             break;
 
         case 'a':
-
-            while (cpu->currentInstruction.instructionName != "ILL" && pcRepeatCount < 3 && !success)
+        {
+            CPUState currState = cpu->getCPUState();
+            while (currState.instructionName != "ILL" && !PCRepeat && !success)
             {
+                executeInstruction(cpu);
+                currState = cpu->getCPUState();
 
-                // cpu->execute(debugOutput);
-                cpu->execute();
-                if (cpu->pc == currentPC)
-                {
-                    pcRepeatCount++;
-                }
-                else if (cpu->pc == 0x3469 || cpu->pc == 0x346c)
-                {
+                if (currState.PC == currentPC)
+                    PCRepeat = true;
+                else if (currState.PC == 0x3469 || currState.PC == 0x346c)
                     success = true;
-                }
-                else
-                {
-                    currentPC = cpu->pc;
-                }
+
+
+                currentPC = currState.PC;
                 instructionCount++;
             }
-
-            cpu->printOperation(cpu->pc, debugOutput);
             break;
-
+        }
         case 'b':
             
-            while (count < 40880)
+            while (count < 46615)
             {
                 erase();
                 addstr(std::to_string(count).c_str());
                 addstr(" instructions run successfully");
                 refresh();
-                cpu->execute(debugOutput);
+                executeInstruction(cpu);
                 // cpu->execute();
-                if (cpu->pc == currentPC)
+                if (state.PC == currentPC)
                 {
-                    pcRepeatCount++;
+                    // pcRepeatCount++;
                 }
                 else
                 {
-                    currentPC = cpu->pc;
+                    currentPC = state.PC;
                 }
                 ++count;
             }
-
-            cpu->printOperation(cpu->pc, debugOutput);
             break;
 
         case 'r':

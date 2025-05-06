@@ -2,14 +2,13 @@
 
 #include <memory>
 #include <stdint.h>
-#include <string>
-#include "CPU6502.h"
 #include "Cartridge.h"
 
 class Bus
 {
 public:
     Bus() : m_RAM(2 * 1024) {}
+    Bus(uint64_t RAMSize) : m_RAM(RAMSize) {}
 
     uint8_t read(uint16_t addr);
     void write(uint16_t addr, uint8_t value);
@@ -22,8 +21,8 @@ public:
     void connectCartridge(std::shared_ptr<Cartridge> cartridge) { m_cartridge = cartridge; }
     void disconnectCartridge() { m_cartridge = nullptr; }
 
-    // void loadProgram(const char* fileName);
-    // void clearmemory();
+    //for CPUDebug tool
+    void loadProgram(const char* fileName);
 
 private:
     std::vector<uint8_t> m_RAM;
