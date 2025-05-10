@@ -52,12 +52,15 @@ void Bus::CPUWrite(uint16_t addr, uint8_t value)
 
 uint8_t Bus::PPURead(uint16_t addr)
 {
-
+    return m_cartridge ? m_cartridge->PPURead(addr) : 0;
 }
 
 void Bus::PPUWrite(uint16_t addr, uint8_t value)
 {
+    if (! m_cartridge)
+        return;
     
+    m_cartridge->PPUWrite(addr, value);
 }
 
 void Bus::loadProgram(const char* fileName)

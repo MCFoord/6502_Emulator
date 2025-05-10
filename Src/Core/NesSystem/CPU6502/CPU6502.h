@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include "Bus.h"
+#include "PPU.h"
 
 struct CPUState
 {
@@ -36,6 +37,7 @@ public:
     ~CPU6502();
 
     void connectBus(std::shared_ptr<Bus> bus) { m_bus = bus; }
+    void connectPPU(std::shared_ptr<PPU> PPU) { m_PPU = PPU; }
     bool tick();
     void reset();
     CPUState getCPUState()
@@ -113,6 +115,7 @@ private:
     void setFlag(CPUFLAGS flag, bool set);
 
     std::shared_ptr<Bus> m_bus = nullptr;
+    std::shared_ptr<PPU> m_PPU = nullptr;
 
     //addressing modes
     bool implicit(uint8_t cycle);

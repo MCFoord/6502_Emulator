@@ -7,7 +7,7 @@
 class Bus
 {
 public:
-    Bus() : m_RAM(2 * 1024) {}
+    Bus() : m_RAM(2 * 1024), m_VRAM(4 * 1024) {}
     Bus(uint64_t RAMSize) : m_RAM(RAMSize) {}
 
     uint8_t read(uint16_t addr);
@@ -26,5 +26,6 @@ public:
 
 private:
     std::vector<uint8_t> m_RAM;
+    std::vector<uint8_t> m_VRAM;
     std::shared_ptr<Cartridge> m_cartridge;
 };

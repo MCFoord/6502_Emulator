@@ -338,12 +338,18 @@ void CPU6502::fetch()
 
 uint8_t CPU6502::read(uint16_t addr)
 {
+    if (addr >= 0x2000 && addr <= 0x3FFF)
+        return m_PPU->CPURead(addr);
+
     return m_bus->read(addr);
 }
 
 void CPU6502::write(uint16_t addr, uint8_t value)
 {
-    m_bus->write(addr, value);
+    if (addr >= 0x2000 && addr <= 0x3FFF)
+        m_PPU->CPUWrite(addr, value);
+    else
+        m_bus->write(addr, value);
 }
 
 void CPU6502::push(uint8_t value)

@@ -31,12 +31,12 @@ Cartridge::Cartridge(std::filesystem::path path)
 	}
 
 	uint64_t PRGROMSizeBits = 16 * 1024 * fileHeader.PRGSize;
-	uint64_t CHRROMSizeBits = 8 * 1024 * fileHeader.CHRSize;
+	uint64_t CHRRAMSizeBits = 8 * 1024 * fileHeader.CHRSize;
 
 	m_PRGRAM.resize(8 * 1024);
 	m_PRGROM.resize(PRGROMSizeBits);
 	if (fileHeader.CHRSize != 0)
-		m_CHRRAM.resize(CHRROMSizeBits);
+		m_CHRRAM.resize(CHRRAMSizeBits);
 
 	
 	MirrorDirection nametableMirrorDirection = (fileHeader.flags6 << 0) ? MirrorDirection::HORIZONTAL : MirrorDirection::VERTICAL;
@@ -49,7 +49,7 @@ Cartridge::Cartridge(std::filesystem::path path)
 	pread(fd, m_PRGROM.data(), PRGROMSizeBits, PRGOffset);
 
 	if (fileHeader.CHRSize > 0)
-		pread(fd, m_CHRRAM.data(), CHRROMSizeBits, PRGOffset + PRGROMSizeBits);
+		pread(fd, m_CHRRAM.data(), CHRRAMSizeBits, PRGOffset + PRGROMSizeBits);
 
 	m_mapper = getMapperByID(mapperID, fileHeader.PRGSize, fileHeader.CHRSize);
 	m_success = true;
