@@ -1,5 +1,7 @@
 #version 460 core
 
+//CURRENTLY ONLY DOES ONE OF THE TABLES AT A TIME-- NEED TO CHANGE
+
 layout (local_size_x = 8) in;
 
 layout (binding = 0) buffer InputBuffer {
@@ -12,20 +14,20 @@ layout(rgba32f, binding = 1) uniform writeonly image2D outputImage;
 
 void main()
 {
-	// for invocation 5
+	uint groupId = gl_WorkGroupID.x;
+	uint firstIndex = groupId * 16 + gl_GlobalInvocationID.x;
+	uint secondindex = firstIndex + 8;
 
-	uint groupId = gl_WorkGroupID.x; //=  17
-	uint firstIndex = groupId * 16 + gl_GlobalInvocationID.x; //= 17 * 16 + 5 = 0x115 = 277
-	uint secondindex = firstIndex + 8 //= 0x125 + 8 = 0x11D = 285
-
-	vec2 basePixelCoord = vec2(+(groupId % 8)) //= (9, 14)
+	uint tileTopLeft = (groupId % 8) * 8 + 1;
+	vec2 baseCoord = vec2(tileTopLeft, tileTopLeft + gl_GlobalInvocationID.x);
 
 	if (index < 0 || secondindex > inputData.length())
 		return;
 
-	//if pixels outside image return?
+	if (baseCoord.x < 0 || baseCoord.x + 7 > 128 || baseCoord.y < 0 || baseCoord.y + 7 > 128)
+		return;
 
-
+	// =bit shift the values to get the 0 - 3
 }
 
 // 	pixel (x,y)
@@ -48,5 +50,5 @@ void main()
 // 				. . . . . . . . | 		. . . . . . . . |
 // 				. . . . . . . . | (9,14). . . . . . . . |
 // 				. . . . . . . . | 		. . . . . . . . |
-// 				. . . . . . . . | 		. . . . . . . . |18 mod 128
+// 				. . . . . . . . | 		. . . . . . . . |
 // 0x10F (0, 16). . . . . . . . | 0x11F	. . . . . . . . | >>> 0xFFF (128, 16)
