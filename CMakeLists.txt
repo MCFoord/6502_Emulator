@@ -11,6 +11,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_subdirectory(Src)
 add_subdirectory(External)
 
+
 add_executable(6502Emulator
     ${ROOT_DIR}/main.cpp
 )
