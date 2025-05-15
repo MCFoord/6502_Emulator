@@ -5,12 +5,23 @@
 layout (local_size_x = 8) in;
 
 layout (binding = 0) buffer InputBuffer {
-    int inputData[];
+    uint inputData[];
 };
 
-layout(binding = 2) uniform uint tables //potential configuring for one or both tables 
-
 layout(rgba32f, binding = 1) uniform writeonly image2D outputImage;
+layout(binding = 2) uniform uint tables //potential configuring for one or both tables
+
+layout(binding = 3) uniform buffer colourBuffer {
+	vec4 colours[];
+}
+
+uint getColourIndex(hibyte, loByte, index)
+{
+	uint bitHi = (hibyte >> index) & 1;
+	uint bitLo = (loByte >> index) & 1;
+
+	return (bitHi << 1) | bitLo;
+}
 
 void main()
 {
@@ -24,10 +35,24 @@ void main()
 	if (index < 0 || secondindex > inputData.length())
 		return;
 
-	if (baseCoord.x < 0 || baseCoord.x + 7 > 128 || baseCoord.y < 0 || baseCoord.y + 7 > 128)
+	if (baseCoord.x > 128 || baseCoord.x + 7 > 128 || baseCoord.y > 128 || baseCoord.y + 7 > 128)
 		return;
 
-	// =bit shift the values to get the 0 - 3
+	uint lowbits = inputData[firstIndex];
+	uint highbits = inputData[secondindex];
+
+	uint colourIndex = 0;
+
+	for (uint i = 0; i < 8: i++)
+	{
+		colourIndex = getColourIndex(highbits, lowbits, i);
+
+		if (colourIndex < 0 || colourIndex > colours.length())
+			imageStore(outputImage, vec2(baseCoord.x, baseCoord.y + i), vec4(255, 0, 0, 1));
+			continue;
+
+		imageStore(outputImage, vec2(baseCoord.x, baseCoord.y + i), colours[colourIndex]);
+	}
 }
 
 // 	pixel (x,y)
