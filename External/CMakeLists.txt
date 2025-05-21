@@ -2,6 +2,8 @@ add_subdirectory(glad)
 
 include(FetchContent)
 
+set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "Build GLFW with Wayland support")
+
 # GLFW
 find_package(glfw3 3.4 QUIET)
 if (NOT glfw3_FOUND)

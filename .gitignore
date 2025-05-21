@@ -41,4 +41,5 @@ imgui*.ini
 
 *.DS_store
 
-external/imgui
+External/imgui
+.cache/
