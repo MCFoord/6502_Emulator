@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "Controller.h"
 
 Controller::Controller()
