@@ -1,6 +1,7 @@
 project(core)
 
 add_subdirectory(NesSystem)
+add_subdirectory(Renderer)
 
 set(CONTROLLER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Controller)
 

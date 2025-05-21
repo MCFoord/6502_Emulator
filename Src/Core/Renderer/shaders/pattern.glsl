@@ -56,7 +56,7 @@ void main()
 }
 
 // 	pixel (x,y)
-// 	for one table, 256, 128 for both tables
+// 	for one table 128, 256 for both tables
 	           			
 // 0x0 (0,0) 	. . . . . . . . | 0x10	. . . . . . . . | >>> 0xF0 (128, 0)
 // 				. . . . . . . . | 		. . . . . . . . |
