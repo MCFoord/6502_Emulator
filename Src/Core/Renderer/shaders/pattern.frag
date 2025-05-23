@@ -25,19 +25,19 @@ void main()
 	const uint nColTiles = 16;
 	const uint indexesPerTile = 16;
 	const uint nPixelsPerTileSide = 8;
-	uint totalColPixels = nColTiles * nPixelPerTilesSide;
+	const uint totalColPixels = nColTiles * nPixelPerTilesSide;
 	
-	xIndexOffset = (uint)texCoord.x / (nPixelsPerTileSide * nRowTiles);
-	yIndexOffset = ((uint)(totalColPixels - texCoord.y) / nPixelsPerTileSide) * (nRowTiles * indexesPerTile);
+	const uint flatOffsetFromXCoord = (uint)texCoord.x / (nPixelsPerTileSide * nRowTiles);
+	const uint flatOffsetFromYCoord = ((uint)(totalColPixels - texCoord.y) / nPixelsPerTileSide) * (nRowTiles * indexesPerTile);
 	
-	uint tileBaseAddress = xIndexOffset + yIndexOffset;
-	uint offsetFromBase = (totalColPixels - texCoord.y) % (nPixelsPerTileSide + 1);
+	const uint tileBaseAddress = flatOffsetFromXCoord + flatOffsetFromYCoord;
+	const uint offsetFromBase = (totalColPixels - texCoord.y) % (nPixelsPerTileSide + 1);
 
-	uint firstIndex = tileBaseAddress + offsetFromBase;
-	uint secondindex = firstIndex + 8;
+	const uint firstIndex = tileBaseAddress + offsetFromBase;
+	const uint secondindex = firstIndex + 8;
 
-	uint bitIndex = x % 8;
-	uint colourIndex = getColourIndex(inputData[firstIndex], inputData[secondindex], bitIndex);
+	const uint bitIndex = x % 8;
+	const uint colourIndex = getColourIndex(inputData[firstIndex], inputData[secondindex], bitIndex);
 
 	gl_FragColor = colours[colourIndex];
 }
