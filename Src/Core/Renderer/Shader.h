@@ -1,5 +1,6 @@
 #pragma once
 
 #include <filesystem>
+#include <glad/gl.h>
 
-uint32_t createComputeShader(std::filesystem::path path);
+GLuint CompileShader(GLenum type, std::filesystem::path path);
